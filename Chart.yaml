@@ -16,7 +16,6 @@ dependencies:
 description: Vaultwarden is an unofficial Bitwarden-compatible server written in Rust
 engine: gotpl
 home: https://github.com/dani-garcia/vaultwarden
-icon: https://bitnami.com/assets/stacks/keycloak/img/keycloak-stack-220x234.png
 keywords:
   - Rust
   - vaultwarden
