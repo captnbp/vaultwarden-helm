@@ -16,7 +16,7 @@ dependencies:
 description: Vaultwarden is an unofficial Bitwarden-compatible server written in Rust
 engine: gotpl
 home: https://lab.frogg.it/captnbp/vaultwarden
-icon: "https://sesoodan.sirv.com/bitwarden_rs.png"
+icon: "https://yunohost.org/user/images/bitwarden_logo.png"
 keywords:
   - Rust
   - vaultwarden
@@ -27,4 +27,4 @@ maintainers:
 sources:
   - https://lab.frogg.it/captnbp/vaultwarden
   - https://github.com/dani-garcia/vaultwarden
-version: 0.1.2
+version: 0.1.3
