@@ -31,6 +31,10 @@ spec:
   {{- if (and (eq .Values.service.type "LoadBalancer") (not (empty .Values.service.loadBalancerIP))) }}
   loadBalancerIP: {{ .Values.service.loadBalancerIP }}
   {{- end }}
+  ipFamilyPolicy: RequireDualStack
+  ipFamilies:
+    - IPv6
+    - IPv4
   {{- if .Values.service.sessionAffinity }}
   sessionAffinity: {{ .Values.service.sessionAffinity }}
   {{- end }}
