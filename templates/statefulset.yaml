@@ -92,6 +92,7 @@ spec:
           {{- if .Values.lifecycleHooks }}
           lifecycle: {{- include "common.tplvalues.render" (dict "value" .Values.lifecycleHooks "context" $) | nindent 12 }}
           {{- end }}
+          {{- if ne "default" .Values.database.type }}
           env:
             - name: DATABASE_PASSWORD
               valueFrom:
@@ -101,6 +102,7 @@ spec:
             {{- if .Values.extraEnvVars }}
             {{- include "common.tplvalues.render" (dict "value" .Values.extraEnvVars "context" $) | nindent 12 }}
             {{- end }}
+          {{- end }}
           envFrom:
             - configMapRef:
                 name: {{ include "common.names.fullname" . }}
