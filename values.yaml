@@ -74,7 +74,7 @@ diagnosticMode:
 image:
   registry: docker.io
   repository: vaultwarden/server
-  tag: 1.27.0-alpine
+  tag: 1.28.1-alpine
   digest: ""
   ## Specify a imagePullPolicy
   ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
