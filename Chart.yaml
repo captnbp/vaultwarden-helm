@@ -1,8 +1,12 @@
 annotations:
   category: DeveloperTools
+  artifacthub.io/images: |
+    - name: code-server
+      image: docker.io/vaultwarden/server:1.29.2-alpine
+  artifacthub.io/license: MIT
 name: vaultwarden
 apiVersion: v2
-appVersion: 1.28.1
+appVersion: 1.29.2
 dependencies:
   - condition: postgresql.enabled
     name: postgresql
@@ -27,4 +31,4 @@ maintainers:
 sources:
   - https://lab.frogg.it/captnbp/vaultwarden-helm
   - https://github.com/dani-garcia/vaultwarden
-version: 0.1.6
+version: 0.1.7

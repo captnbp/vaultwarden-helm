@@ -7,9 +7,7 @@
 ## TL;DR
 
 ```console
-$ helm repo add doca https://charts.doca.cloud/charts
-
-$ helm install my-release doca/vaultwarden
+$ helm install my-release oci://registry-1.docker.io/captnbp/vaultwarden
 ```
 
 ## Prerequisites
@@ -24,9 +22,7 @@ $ helm install my-release doca/vaultwarden
 To install the chart with the release name `my-release`:
 
 ```console
-$ helm repo add doca https://charts.doca.cloud/charts
-
-$ helm install my-release doca/vaultwarden
+$ helm install my-release oci://registry-1.docker.io/captnbp/vaultwarden
 ```
 
 These commands deploy Vaultwarden on the Kubernetes cluster in the default configuration. The [Parameters](#parameters) section lists the parameters that can be configured during installation.
