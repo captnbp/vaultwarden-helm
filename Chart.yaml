@@ -1,12 +1,12 @@
 annotations:
   category: DeveloperTools
   artifacthub.io/images: |
-    - name: code-server
-      image: docker.io/vaultwarden/server:1.29.2-alpine
+    - name: vaultwarden
+      image: docker.io/vaultwarden/server:1.30.0-alpine
   artifacthub.io/license: MIT
 name: vaultwarden
 apiVersion: v2
-appVersion: 1.29.2
+appVersion: 1.30.0
 dependencies:
   - condition: postgresql.enabled
     name: postgresql
@@ -19,7 +19,7 @@ dependencies:
     version: 2.x.x
 description: Vaultwarden is an unofficial Bitwarden-compatible server written in Rust
 engine: gotpl
-home: https://lab.frogg.it/captnbp/vaultwarden-helm
+home: https://lab.frogg.it/doca/vaultwarden-helm
 icon: "https://yunohost.org/user/images/bitwarden_logo.png"
 keywords:
   - Rust
@@ -29,6 +29,6 @@ maintainers:
     email: benoit.pourre@gmail.com
     url: https://github.com/captnbp
 sources:
-  - https://lab.frogg.it/captnbp/vaultwarden-helm
+  - https://lab.frogg.it/doca/vaultwarden-helm
   - https://github.com/dani-garcia/vaultwarden
-version: 0.1.7
+version: 0.1.8

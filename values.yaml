@@ -74,7 +74,7 @@ diagnosticMode:
 image:
   registry: docker.io
   repository: vaultwarden/server
-  tag: 1.29.2-alpine
+  tag: 1.30.0-alpine
   digest: ""
   ## Specify a imagePullPolicy
   ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
@@ -92,11 +92,6 @@ image:
   ## Enable debug mode
   ##
   debug: false
-
-## @param websocket.enabled Enable websocket notifications
-##
-websocket:
-  enabled: true
 
 ## @param rocket.workers Rocket number of workers
 ##
@@ -161,11 +156,9 @@ extraEnvVarsSecret: ""
 ##
 replicaCount: 1
 ## @param containerPorts.http vaultwarden HTTP container port
-## @param containerPorts.websocket vaultwarden websocket container port
 ##
 containerPorts:
   http: 8080
-  websocket: 3012
 ## @param extraContainerPorts Optionally specify extra list of additional port-mappings for vaultwarden container
 ##
 extraContainerPorts: []
@@ -412,17 +405,14 @@ service:
   ##
   type: ClusterIP
   ## @param service.ports.http vaultwarden service HTTP port
-  ## @param service.ports.websocket vaultwarden service websocket port
   ##
   ports:
     http: 8080
-    websocket: 3012
   ## @param service.nodePorts [object] Specify the nodePort values for the LoadBalancer and NodePort service types.
   ## ref: https://kubernetes.io/docs/concepts/services-networking/service/#type-nodeport
   ##
   nodePorts:
     http: ""
-    websocket: ""
   ## @param service.sessionAffinity Control where client requests go, to the same pod or round-robin
   ## Values: ClientIP or None
   ## ref: https://kubernetes.io/docs/user-guide/services/
@@ -488,9 +478,6 @@ ingress:
   ## @param ingress.path Default path for the ingress record
   ##
   path: /
-  ## @param ingress.pathWs Path for the websocket ingress
-  ##
-  pathWs: "/notifications/hub"
   ## @param ingress.servicePort Backend service port to use
   ## Default is http. Alternative is https.
   ##

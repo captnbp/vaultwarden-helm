@@ -14,8 +14,6 @@ metadata:
     {{- if .Values.ingress.tls }}
     ingress.kubernetes.io/ssl-redirect: "true"
     {{- end }}
-    nginx.ingress.kubernetes.io/configuration-snippet: |
-      more_set_headers "Request-Id: $req_id";
     nginx.ingress.kubernetes.io/connection-proxy-header: "keep-alive"
     nginx.ingress.kubernetes.io/enable-cors: "true"
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
@@ -46,13 +44,6 @@ spec:
         paths:
           {{- if .Values.ingress.extraPaths }}
           {{- toYaml .Values.ingress.extraPaths | nindent 10 }}
-          {{- end }}
-          {{- if .Values.websocket.enabled }}
-          - path: {{ .Values.ingress.pathWs }}
-            {{- if eq "true" (include "common.ingress.supportsPathType" .) }}
-            pathType: {{ .Values.ingress.pathType }}
-            {{- end }}
-            backend: {{- include "common.ingress.backend" (dict "serviceName" (include "common.names.fullname" .) "servicePort" "websocket" "context" $)  | nindent 14 }}
           {{- end }}
           - path: {{ .Values.ingress.path }}
             {{- if eq "true" (include "common.ingress.supportsPathType" .) }}

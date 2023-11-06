@@ -23,11 +23,6 @@ data:
   #SMTP_ACCEPT_INVALID_HOSTNAMES: {{ .Values.smtp.acceptInvalidHostnames | quote }}
   #SMTP_ACCEPT_INVALID_CERTS: {{ .Values.smtp.acceptInvalidCerts | quote }}
   {{- end }}
-  {{- if .Values.websocket.enabled }}
-  WEBSOCKET_ENABLED: "true"
-  WEBSOCKET_ADDRESS: "0.0.0.0"
-  WEBSOCKET_PORT: {{ .Values.containerPorts.websocket | quote }}
-  {{- end }}
   DATA_FOLDER: "/data"
   ROCKET_PORT: {{ .Values.containerPorts.http | quote }}
   ROCKET_WORKERS: {{ .Values.rocket.workers | quote }}

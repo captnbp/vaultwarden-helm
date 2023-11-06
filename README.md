@@ -78,12 +78,11 @@ $ helm delete --purge my-release
 | ------------------- | ----------------------------------------------------------------------------------------------------------- | -------------------- |
 | `image.registry`    | Vaultwarden image registry                                                                                  | `docker.io`          |
 | `image.repository`  | Vaultwarden image repository                                                                                | `vaultwarden/server` |
-| `image.tag`         | Vaultwarden image tag (immutable tags are recommended)                                                      | `1.26.0-alpine`      |
+| `image.tag`         | Vaultwarden image tag (immutable tags are recommended)                                                      | `1.30.0-alpine`      |
 | `image.digest`      | Vaultwarden image digest in the way sha256:aa.... Please note this parameter, if set, will override the tag | `""`                 |
 | `image.pullPolicy`  | Vaultwarden image pull policy                                                                               | `IfNotPresent`       |
 | `image.pullSecrets` | Specify docker-registry secret names as an array                                                            | `[]`                 |
 | `image.debug`       | Enable %%MAIN_CONTAINER%% image debug mode                                                                  | `false`              |
-| `websocket.enabled` | Enable websocket notifications                                                                              | `true`               |
 | `rocket.workers`    | Rocket number of workers                                                                                    | `10`                 |
 | `webVaultEnabled`   | Enable Web Vault                                                                                            | `true`               |
 
@@ -111,7 +110,6 @@ $ helm delete --purge my-release
 | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | ------------------- |
 | `replicaCount`                          | Number of vaultwarden replicas to deploy                                                                                 | `1`                 |
 | `containerPorts.http`                   | vaultwarden HTTP container port                                                                                          | `8080`              |
-| `containerPorts.websocket`              | vaultwarden websocket container port                                                                                     | `3012`              |
 | `extraContainerPorts`                   | Optionally specify extra list of additional port-mappings for vaultwarden container                                      | `[]`                |
 | `podSecurityContext.enabled`            | Enabled vaultwarden pods' Security Context                                                                               | `true`              |
 | `podSecurityContext.fsGroup`            | Set vaultwarden pod's Security Context fsGroup                                                                           | `1000`              |
@@ -181,7 +179,6 @@ $ helm delete --purge my-release
 | ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | ------------------------ |
 | `service.type`                     | Kubernetes service type                                                                                                          | `ClusterIP`              |
 | `service.ports.http`               | vaultwarden service HTTP port                                                                                                    | `8080`                   |
-| `service.ports.websocket`          | vaultwarden service websocket port                                                                                               | `3012`                   |
 | `service.nodePorts`                | Specify the nodePort values for the LoadBalancer and NodePort service types.                                                     | `{}`                     |
 | `service.sessionAffinity`          | Control where client requests go, to the same pod or round-robin                                                                 | `None`                   |
 | `service.sessionAffinityConfig`    | Additional settings for the sessionAffinity                                                                                      | `{}`                     |
@@ -198,7 +195,6 @@ $ helm delete --purge my-release
 | `ingress.apiVersion`               | Force Ingress API version (automatically detected if not set)                                                                    | `""`                     |
 | `ingress.hostname`                 | Default host for the ingress record (evaluated as template)                                                                      | `vaultwarden.local`      |
 | `ingress.path`                     | Default path for the ingress record                                                                                              | `/`                      |
-| `ingress.pathWs`                   | Path for the websocket ingress                                                                                                   | `/notifications/hub`     |
 | `ingress.servicePort`              | Backend service port to use                                                                                                      | `http`                   |
 | `ingress.annotations`              | Additional annotations for the Ingress resource. To enable certificate autogeneration, place here your cert-manager annotations. | `{}`                     |
 | `ingress.tls`                      | Enable TLS configuration for the host defined at `ingress.hostname` parameter                                                    | `false`                  |
