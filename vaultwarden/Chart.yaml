@@ -30,4 +30,4 @@ maintainers:
 sources:
   - https://lab.frogg.it/doca/vaultwarden-helm
   - https://github.com/dani-garcia/vaultwarden
-version: 0.2.1
+version: 0.3.0
