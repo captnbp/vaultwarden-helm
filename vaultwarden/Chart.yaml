@@ -11,14 +11,13 @@ dependencies:
   - condition: postgresql.enabled
     name: postgresql
     repository: https://charts.bitnami.com/bitnami
-    version: 12.x.x
+    version: 16.x.x
   - name: common
     repository: https://charts.bitnami.com/bitnami
     tags:
       - bitnami-common
     version: 2.x.x
 description: Vaultwarden is an unofficial Bitwarden-compatible server written in Rust
-engine: gotpl
 home: https://lab.frogg.it/doca/vaultwarden-helm
 icon: "https://yunohost.org/user/images/bitwarden_logo.png"
 keywords:
