@@ -74,7 +74,7 @@ diagnosticMode:
 image:
   registry: docker.io
   repository: vaultwarden/server
-  tag: 1.30.0-alpine
+  tag: 1.34.3-alpine
   digest: ""
   ## Specify a imagePullPolicy
   ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
@@ -466,6 +466,8 @@ ingress:
   ## ref: https://kubernetes.io/blog/2020/04/02/improvements-to-the-ingress-api-in-kubernetes-1.18/
   ##
   ingressClassName: ""
+  ## @param ingress.ingressControllerType ingressControllerType that will be be used to implement the Ingress specific annotations (Ex. nginx or traefik)
+  ingressControllerType: "nginx"
   ## @param ingress.pathType Ingress path type
   ##
   pathType: ImplementationSpecific

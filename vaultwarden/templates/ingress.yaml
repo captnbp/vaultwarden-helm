@@ -14,6 +14,7 @@ metadata:
     {{- if .Values.ingress.tls }}
     ingress.kubernetes.io/ssl-redirect: "true"
     {{- end }}
+    {{- if eq .Values.ingress.ingressControllerType "nginx" }}
     nginx.ingress.kubernetes.io/connection-proxy-header: "keep-alive"
     nginx.ingress.kubernetes.io/enable-cors: "true"
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
@@ -26,6 +27,10 @@ metadata:
     nginx.ingress.kubernetes.io/proxy-read-timeout: "1800"
     {{- if .Values.ingress.nginxAllowList }}
     nginx.ingress.kubernetes.io/whitelist-source-range: {{ .Values.ingress.nginxAllowList }}
+    {{- end }}
+    {{- end }}
+    {{- if eq .Values.ingress.ingressControllerType "traefik" }}
+    traefik.ingress.kubernetes.io/router.middlewares: {{ .Release.Namespace }}-{{ template "common.names.fullname" . }}-redirect-to-https@kubernetescrd,{{ .Release.Namespace }}-{{ template "common.names.fullname" . }}-headers@kubernetescrd
     {{- end }}
     {{- if .Values.commonAnnotations }}
     {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}

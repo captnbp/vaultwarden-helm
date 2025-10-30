@@ -1,0 +1,48 @@
+{{- if eq .Values.ingress.ingressControllerType "traefik" }}
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: {{ template "common.names.fullname" . }}-headers
+  namespace: {{ .Release.Namespace | quote }}
+  labels: {{- include "common.labels.standard" . | nindent 4 }}
+    {{- if .Values.commonLabels }}
+    {{- include "common.tplvalues.render" ( dict "value" .Values.commonLabels "context" $ ) | nindent 4 }}
+    {{- end }}
+    app.kubernetes.io/component: vaultwarden
+  annotations:
+    {{- if .Values.commonAnnotations }}
+    {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+    {{- end }}
+spec:
+  headers:
+    contentTypeNosniff: true
+    customResponseHeaders:
+      X-Powered-By: ""
+      X-Robots-Tag: noindex,nofollow,none,noarchive,nosnippet,notranslate,noimageindex
+      server: ""
+    forceSTSHeader: true
+    permissionsPolicy: camera=(), microphone=(), geolocation=(), payment=(), usb=(), vr=()
+    referrerPolicy: same-origin
+    stsIncludeSubdomains: true
+    stsPreload: true
+    stsSeconds: 315360000
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: {{ template "common.names.fullname" . }}-redirect-to-https
+  namespace: {{ .Release.Namespace | quote }}
+  labels: {{- include "common.labels.standard" . | nindent 4 }}
+    {{- if .Values.commonLabels }}
+    {{- include "common.tplvalues.render" ( dict "value" .Values.commonLabels "context" $ ) | nindent 4 }}
+    {{- end }}
+    app.kubernetes.io/component: vaultwarden
+  annotations:
+    {{- if .Values.commonAnnotations }}
+    {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+    {{- end }}
+spec:
+  redirectScheme:
+    permanent: true
+    scheme: https
+{{- end }}
