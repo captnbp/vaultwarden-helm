@@ -87,7 +87,7 @@ Return the Database user
         {{- .Values.postgresql.auth.username -}}
     {{- end -}}
 {{- else -}}
-    {{- .Values.externalDatabase.user -}}
+    {{- .Values.externalDatabase.username -}}
 {{- end -}}
 {{- end -}}
 
@@ -95,22 +95,16 @@ Return the Database user
 Return the Database encrypted password
 */}}
 {{- define "vaultwarden.databaseSecretName" -}}
-{{- if .Values.postgresql.enabled -}}
-    {{- if .Values.global.postgresql -}}
-        {{- if .Values.global.postgresql.auth -}}
-            {{- if .Values.global.postgresql.auth.existingSecret -}}
-                {{- tpl .Values.global.postgresql.auth.existingSecret $ -}}
-            {{- else -}}
-                {{- default (include "vaultwarden.postgresql.fullname" .) (tpl .Values.postgresql.auth.existingSecret $) -}}
-            {{- end -}}
-        {{- else -}}
-            {{- default (include "vaultwarden.postgresql.fullname" .) (tpl .Values.postgresql.auth.existingSecret $) -}}
-        {{- end -}}
+{{- if .Values.postgresql.enabled }}
+    {{- if .Values.postgresql.auth.existingSecret -}}
+    {{- print .Values.postgresql.auth.existingSecret -}}
     {{- else -}}
-        {{- default (include "vaultwarden.postgresql.fullname" .) (tpl .Values.postgresql.auth.existingSecret $) -}}
+    {{- print (include "vaultwarden.postgresql.fullname" .) -}}
     {{- end -}}
+{{- else if .Values.externalDatabase.existingSecret -}}
+    {{- print .Values.externalDatabase.existingSecret -}}
 {{- else -}}
-    {{- default (printf "%s-externaldb" .Release.Name) (tpl .Values.externalDatabase.existingSecret $) -}}
+    {{- printf "%s-%s" (include "common.names.fullname" .) "externaldb" -}}
 {{- end -}}
 {{- end -}}
 
@@ -125,10 +119,10 @@ Add environment variables to configure database values
         {{- if .Values.externalDatabase.existingSecretPasswordKey -}}
             {{- printf "%s" .Values.externalDatabase.existingSecretPasswordKey -}}
         {{- else -}}
-            {{- print "db-password" -}}
+            {{- print "password" -}}
         {{- end -}}
     {{- else -}}
-        {{- print "db-password" -}}
+        {{- print "password" -}}
     {{- end -}}
 {{- end -}}
 {{- end -}}
