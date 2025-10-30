@@ -99,6 +99,10 @@ spec:
                 secretKeyRef:
                   name: {{ include "vaultwarden.databaseSecretName" . }}
                   key: {{ include "vaultwarden.databaseSecretKey" . }}
+            {{- if .Values.tls.enabled }}
+            - name: ROCKET_TLS
+              value: '{certs="/certs/tls.crt",key="/certs/tls.key"}'
+            {{- end }}
             {{- if .Values.extraEnvVars }}
             {{- include "common.tplvalues.render" (dict "value" .Values.extraEnvVars "context" $) | nindent 12 }}
             {{- end }}
@@ -159,9 +163,14 @@ spec:
             - name: start-script
               mountPath: /etc/vaultwarden.d/
           {{- end }}
-            {{- if .Values.extraVolumeMounts }}
-            {{- include "common.tplvalues.render" (dict "value" .Values.extraVolumeMounts "context" $) | nindent 12 }}
-            {{- end }}
+          {{- if .Values.tls.enabled }}
+            - name: certificates
+              mountPath: /certs
+              readOnly: true
+          {{- end }}
+          {{- if .Values.extraVolumeMounts }}
+          {{- include "common.tplvalues.render" (dict "value" .Values.extraVolumeMounts "context" $) | nindent 12 }}
+          {{- end }}
         {{- if .Values.sidecars }}
         {{- include "common.tplvalues.render" ( dict "value" .Values.sidecars "context" $) | nindent 8 }}
         {{- end }}
@@ -171,6 +180,12 @@ spec:
           configMap:
             name: {{ printf "%s-start" (include "common.names.fullname" .) }}
             defaultMode: 0555
+        {{- end }}
+        {{- if .Values.tls.enabled }}
+        - name: certificates
+          secret:
+            secretName: {{ include "common.names.fullname" . }}-crt
+            defaultMode: 420
         {{- end }}
   {{- if .Values.persistence.enabled }}
   volumeClaimTemplates:
