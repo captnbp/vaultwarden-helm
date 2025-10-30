@@ -5,10 +5,15 @@ metadata:
   namespace: {{ include "common.names.namespace" . | quote }}
   labels: {{- include "common.labels.standard" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
     app.kubernetes.io/component: vaultwarden
-  {{- if or .Values.service.annotations .Values.commonAnnotations }}
-  {{- $annotations := include "common.tplvalues.merge" (dict "values" (list .Values.service.annotations .Values.commonAnnotations) "context" .) }}
-  annotations: {{- include "common.tplvalues.render" ( dict "value" $annotations "context" $ ) | nindent 4 }}
-  {{- end }}
+  annotations: 
+    {{- if or .Values.service.annotations .Values.commonAnnotations }}
+    {{- $annotations := include "common.tplvalues.merge" ( dict "values" ( list .Values.service.annotations .Values.commonAnnotations ) "context" . ) }}{{- include "common.tplvalues.render" ( dict "value" $annotations "context" $) | nindent 4 }}
+    {{- end }}
+    {{- if and (eq .Values.ingress.ingressControllerType "traefik") .Values.tls.enabled }}
+    traefik.ingress.kubernetes.io/service.serversscheme: https
+    traefik.ingress.kubernetes.io/service.serverstransport: "{{ .Release.Namespace }}-{{ template "common.names.fullname" . }}@kubernetescrd"
+    {{- end }}
+
 spec:
   type: {{ .Values.service.type }}
   {{- if and .Values.service.clusterIP (eq .Values.service.type "ClusterIP") }}
@@ -29,6 +34,13 @@ spec:
   {{- if and (eq .Values.service.type "LoadBalancer") (not (empty .Values.service.loadBalancerIP)) }}
   loadBalancerIP: {{ .Values.service.loadBalancerIP }}
   {{- end }}
+  {{- if .Values.service.ipFamilyPolicy }}
+  ipFamilyPolicy: {{ .Values.service.ipFamilyPolicy }}
+  {{- end }}
+  {{- if not (empty .Values.service.ipFamilies)}}
+  ipFamilies: {{- toYaml .Values.service.ipFamilies | nindent 4 }}
+  {{- end }}
+
   ports:
     - name: http
       port: {{ .Values.service.ports.http }}
