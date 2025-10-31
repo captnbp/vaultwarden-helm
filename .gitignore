@@ -4,3 +4,4 @@
 .DS_Store
 values-test.yaml
 charts
+artifacthub-repo.yml
