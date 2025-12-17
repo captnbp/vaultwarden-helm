@@ -51,6 +51,9 @@ metadata:
 data:
   database.sh: |-
     #!/bin/sh
-
-    export DATABASE_URL="{{ printf "postgresql://%s:${DATABASE_PASSWORD}@%s:%s/%s" (include "vaultwarden.databaseUser" .) (include "vaultwarden.databaseHost" .) (include "vaultwarden.databasePort" .) (include "vaultwarden.databaseName" .) }}"
+    {{- if and .Values.cnpCluster.enabled .Values.cnpCluster.tls.enabled }}
+    export DATABASE_URL="{{ printf "postgresql://%s:${DATABASE_PASSWORD}@%s:%s/%s?sslmode=require&sslrootcert=/certs/ca.crt" (include "vaultwarden.database.username" .) (include "vaultwarden.database.host" .) (include "vaultwarden.database.port" .) (include "vaultwarden.database.name" .) }}"
+    {{- else }}
+    export DATABASE_URL="{{ printf "postgresql://%s:${DATABASE_PASSWORD}@%s:%s/%s" (include "vaultwarden.database.username" .) (include "vaultwarden.database.host" .) (include "vaultwarden.database.port" .) (include "vaultwarden.database.name" .) }}"
+    {{- end }}
 {{- end }}

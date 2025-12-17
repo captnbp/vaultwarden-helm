@@ -69,6 +69,53 @@ spec:
       terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
       {{- end }}
       initContainers:
+        {{- if .Values.cnpCluster.enabled }}
+        # Wait for CNP cluster to be ready
+        # This init container is for avoiding CrashLoopback errors in the Hub container because the PostgreSQL container is not ready
+        - name: wait-for-db
+          image: {{ include "common.images.image" (dict "imageRoot" .Values.auxiliaryImage "global" .Values.global) }}
+          imagePullPolicy: {{ .Values.auxiliaryImage.pullPolicy }}
+          command:
+            - /bin/bash
+          args:
+            - -ec
+            - |
+              #!/bin/bash
+              set -o errexit
+              set -o nounset
+              set -o pipefail
+
+              echo "Waiting for PostgreSQL to be ready..."
+              until pg_isready -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER"; do
+                echo "PostgreSQL is unavailable - sleeping"
+                sleep 2
+              done
+              echo "PostgreSQL is ready!"
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            privileged: false
+            readOnlyRootFilesystem: false
+            runAsUser: 1000
+            runAsGroup: 1000
+            runAsNonRoot: true
+            seccompProfile:
+              type: RuntimeDefault
+          env:
+            - name: DB_HOST
+              value: {{ include "vaultwarden.database.host" . | quote }}
+            - name: DB_PORT
+              value: {{ include "vaultwarden.database.port" . | quote }}
+            - name: DB_USER
+              value: {{ include "vaultwarden.database.username" . | quote }}
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "vaultwarden.databaseSecretName" . }}
+                  key: {{ include "vaultwarden.databaseSecretKey" . }}
+        {{- end }}
         {{- if .Values.initContainers }}
         {{- include "common.tplvalues.render" (dict "value" .Values.initContainers "context" $) | nindent 8 }}
         {{- end }}

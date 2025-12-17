@@ -12,10 +12,57 @@ $ helm install my-release oci://registry-1.docker.io/captnbp/vaultwarden
 
 ## Prerequisites
 
-- Kubernetes 1.19+
+- Kubernetes 1.30+
 - Helm 3.2.0+
 - PV provisioner support in the underlying infrastructure
 - [cert-manager](docs/projects/csi-driver/#supported-volume-attributes)
+- [CloudNativePG Operator](https://cloudnative-pg.io/documentation/current/) (if using PostgreSQL) 1.26+
+
+## Migration from Bitnami PostgreSQL to CloudNativePG
+
+This chart now uses [CloudNativePG](https://cloudnative-pg.io/) instead of Bitnami PostgreSQL for PostgreSQL database support. CloudNativePG is a Kubernetes operator that provides native PostgreSQL management capabilities.
+
+### Key Changes
+
+1. **Operator-based management**: CNPG uses a Kubernetes operator pattern for managing PostgreSQL clusters
+2. **Native Kubernetes integration**: Better integration with Kubernetes APIs and resource management
+3. **Enhanced features**: Support for high availability, backups, monitoring, and more
+
+### Migration Steps
+
+1. **Install CloudNativePG Operator**: Before deploying this chart, ensure the CNPG operator is installed in your cluster:
+
+```bash
+kubectl apply -f https://raw.githubusercontent.com/cloudnative-pg/cloudnative-pg/release-1.28/releases/cnpg-1.28.0.yaml
+```
+
+2. **Update your values**: The PostgreSQL configuration has changed. Update your `values.yaml`:
+
+```yaml
+cnpCluster:
+  enabled: true
+  instances: 1
+  storage:
+    size: 10Gi
+  auth:
+    username: vaultwarden
+    database: vaultwarden
+```
+
+3. **Backup your data**: If migrating from an existing Bitnami PostgreSQL installation, ensure you have a backup of your database.
+
+4. **Deploy**: Deploy the chart as usual. The CNPG operator will automatically create and manage the PostgreSQL cluster.
+
+### Benefits of CNPG
+
+- **Native Kubernetes integration**: Uses Kubernetes Custom Resource Definitions (CRDs)
+- **Automated management**: Automatic failover, backups, and monitoring
+- **Scalability**: Easy to scale PostgreSQL instances
+- **High availability**: Built-in support for HA configurations
+- **Backup and recovery**: Integrated backup solutions
+
+> **Note**: If you were using external PostgreSQL, no changes are needed. The external database configuration remains the same.
+=======
 
 ## Installing the Chart
 
@@ -221,12 +268,23 @@ $ helm delete --purge my-release
 
 | Name                                         | Description                                                             | Value         |
 | -------------------------------------------- | ----------------------------------------------------------------------- | ------------- |
-| `postgresql.enabled`                         | Switch to enable or disable the PostgreSQL helm chart                   | `true`        |
-| `postgresql.auth.username`                   | Name for a custom user to create                                        | `vaultwarden` |
-| `postgresql.auth.password`                   | Password for the custom user to create                                  | `""`          |
-| `postgresql.auth.database`                   | Name for a custom database to create                                    | `vaultwarden` |
-| `postgresql.auth.existingSecret`             | Name of existing secret to use for PostgreSQL credentials               | `""`          |
-| `postgresql.architecture`                    | PostgreSQL architecture (`standalone` or `replication`)                 | `standalone`  |
+| `cnpCluster.enabled`                         | Enable CloudNativePG cluster deployment                                 | `false`       |
+| `cnpCluster.instances`                       | Number of PostgreSQL instances (1 for single instance)                  | `1`           |
+| `cnpCluster.storage.size`                    | Storage size for PostgreSQL data                                        | `10Gi`        |
+| `cnpCluster.storage.storageClass`            | Storage class for PostgreSQL PVCs                                       | `""`          |
+| `cnpCluster.storage.pvcTemplate`             | Additional PVC template configuration for PostgreSQL PVCs               | `{}`          |
+| `cnpCluster.database.name`                   | Database name                                                           | `vaultwarden` |
+| `cnpCluster.database.username`               | Database username                                                       | `vaultwarden` |
+| `cnpCluster.database.existingSecret`         | Existing secret with database credentials                               | `""`          |
+| `cnpCluster.resources`                       | Resource requests and limits for PostgreSQL pod                         | `{}`          |
+| `cnpCluster.affinity`                        | Affinity configuration for PostgreSQL pod                               | `{}`          |
+| `cnpCluster.tolerations`                     | Tolerations for PostgreSQL pod                                          | `{}`          |
+| `cnpCluster.nodeSelector`                    | Node selector for PostgreSQL pod                                        | `{}`          |
+| `cnpCluster.monitoring.enabled`              | Enable monitoring with PodMonitor                                       | `true`        |
+| `cnpCluster.backup.enabled`                  | Enable Barman plugin WAL backup configuration                           | `false`       |
+| `cnpCluster.backup.barmanObjectName`         | Barman ObjectStore name for backup                                      | `""`          |
+| `cnpCluster.superuserSecret`                 | Secret containing superuser credentials for the cluster                 | `""`          |
+| `cnpCluster.tls.enabled`                     | Enable TLS encryption for the cluster (requires cert-manager)           | `true`        |
 | `externalDatabase.host`                      | Database host                                                           | `""`          |
 | `externalDatabase.port`                      | Database port number                                                    | `5432`        |
 | `externalDatabase.username`                  | Non-root username for vaultwarden                                       | `vaultwarden` |
@@ -257,11 +315,22 @@ $ helm delete --purge my-release
 | `tls.enabled`                      | Enable internal TLS between Ingress controller and unifi                                   | `true`            |
 | `tls.autoGenerated`                | Create cert-manager signed TLS certificates.                                               | `true`            |
 | `tls.existingSecret`               | Existing secret containing the certificates for Unifi                                      | `""`              |
+| `tls.subject.organizationalUnits`  | Subject's organizational units                                                             | `vaultwarden`     |
 | `tls.subject.organizations`        | Subject's organization                                                                     | `vaultwarden`     |
 | `tls.subject.countries`            | Subject's country                                                                          | `fr`              |
 | `tls.issuerRef.existingIssuerName` | Existing name of the cert-manager http issuer. If provided, it won't create a default one. | `""`              |
 | `tls.issuerRef.kind`               | Kind of the cert-manager issuer resource (defaults to "Issuer")                            | `Issuer`          |
 | `tls.issuerRef.group`              | Group of the cert-manager issuer resource (defaults to "cert-manager.io")                  | `cert-manager.io` |
+
+### Auxiliary image parameters
+
+| Name                         | Description                                                                                               | Value                        |
+| ---------------------------- | --------------------------------------------------------------------------------------------------------- | ---------------------------- |
+| `auxiliaryImage.registry`    | Auxiliary image registry                                                                                  | `REGISTRY_NAME`              |
+| `auxiliaryImage.repository`  | Auxiliary image repository                                                                                | `REPOSITORY_NAME/postgresql` |
+| `auxiliaryImage.digest`      | Auxiliary image digest in the way sha256:aa.... Please note this parameter, if set, will override the tag | `""`                         |
+| `auxiliaryImage.pullPolicy`  | Auxiliary image pull policy                                                                               | `IfNotPresent`               |
+| `auxiliaryImage.pullSecrets` | Auxiliary image pull secrets                                                                              | `[]`                         |
 
 ## License
 

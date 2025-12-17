@@ -26,85 +26,101 @@ Create the name of the service account to use
 {{- end -}}
 
 {{/*
-Create a default fully qualified app name.
-We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
+Return the CNP cluster fullname
 */}}
-{{- define "vaultwarden.postgresql.fullname" -}}
-{{- include "common.names.dependency.fullname" (dict "chartName" "postgresql" "chartValues" .Values.postgresql "context" $) -}}
-{{- end -}}
-
-{{/*
-Return the Database hostname
-*/}}
-{{- define "vaultwarden.databaseHost" -}}
-{{- if eq .Values.postgresql.architecture "replication" }}
-{{- ternary (include "vaultwarden.postgresql.fullname" .) .Values.externalDatabase.host .Values.postgresql.enabled -}}-primary
+{{- define "vaultwarden.cnp.fullname" -}}
+{{- if .Values.cnpCluster.name -}}
+{{- .Values.cnpCluster.name | trunc 63 | trimSuffix "-" -}}
 {{- else -}}
-{{- ternary (include "vaultwarden.postgresql.fullname" .) .Values.externalDatabase.host .Values.postgresql.enabled -}}
+{{- printf "%s-postgresql" (include "common.names.fullname" .) | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 {{- end -}}
 
 {{/*
-Return the Database port
+Return the CNP cluster service name (read-write)
 */}}
-{{- define "vaultwarden.databasePort" -}}
-{{- ternary "5432" .Values.externalDatabase.port .Values.postgresql.enabled -}}
+{{- define "vaultwarden.cnp.serviceName" -}}
+{{- printf "%s-rw" (include "vaultwarden.cnp.fullname" .) -}}
 {{- end -}}
 
 {{/*
-Return the Database database name
+Return the CNP secret name
 */}}
-{{- define "vaultwarden.databaseName" -}}
-{{- if .Values.postgresql.enabled }}
-    {{- if .Values.global.postgresql }}
-        {{- if .Values.global.postgresql.auth }}
-            {{- coalesce .Values.global.postgresql.auth.database .Values.postgresql.auth.database -}}
-        {{- else -}}
-            {{- .Values.postgresql.auth.database -}}
-        {{- end -}}
-    {{- else if .Values.postgresql.auth.database -}}
-        {{- .Values.postgresql.auth.database -}}
-    {{- else -}}
-        {{- printf "bitnami_%s"  (include "common.names.fullname" .) -}}
-    {{- end -}}
+{{- define "vaultwarden.cnp.secretName" -}}
+{{- if .Values.cnpCluster.database.existingSecret -}}
+{{- .Values.cnpCluster.database.existingSecret -}}
 {{- else -}}
-    {{- .Values.externalDatabase.database -}}
+{{- printf "%s-app" (include "vaultwarden.cnp.fullname" .) -}}
 {{- end -}}
 {{- end -}}
 
 {{/*
-Return the Database user
+Return the CNP database password
 */}}
-{{- define "vaultwarden.databaseUser" -}}
-{{- if .Values.postgresql.enabled -}}
-    {{- if .Values.global.postgresql -}}
-        {{- if .Values.global.postgresql.auth -}}
-            {{- coalesce .Values.global.postgresql.auth.username .Values.postgresql.auth.username -}}
-        {{- else -}}
-            {{- .Values.postgresql.auth.username -}}
-        {{- end -}}
-    {{- else -}}
-        {{- .Values.postgresql.auth.username -}}
-    {{- end -}}
+{{- define "vaultwarden.cnp.password" -}}
+{{- $secretData := (lookup "v1" "Secret" $.Release.Namespace (include "vaultwarden.cnp.secretName" .)).data }}
+{{- if and $secretData (hasKey $secretData "password") }}
+{{- index $secretData "password" | b64dec }}
+{{- else }}
+{{- randAlphaNum 16 }}
+{{- end }}
+{{- end -}}
+
+{{/*
+Get the database host
+*/}}
+{{- define "vaultwarden.database.host" -}}
+{{- if .Values.cnpCluster.enabled -}}
+{{- $releaseNamespace := .Release.Namespace }}
+{{- $clusterDomain := .Values.clusterDomain }}
+{{- $serviceName := include "vaultwarden.cnp.serviceName" . }}
+{{- printf "%s.%s.svc.%s" $serviceName $releaseNamespace $clusterDomain -}}
 {{- else -}}
-    {{- .Values.externalDatabase.username -}}
+{{- .Values.externalDatabase.host -}}
 {{- end -}}
 {{- end -}}
 
 {{/*
-Return the Database encrypted password
+Get the database port
+*/}}
+{{- define "vaultwarden.database.port" -}}
+{{- if .Values.cnpCluster.enabled -}}
+5432
+{{- else -}}
+{{- .Values.externalDatabase.port -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Get the database name
+*/}}
+{{- define "vaultwarden.database.name" -}}
+{{- if .Values.cnpCluster.enabled -}}
+{{- .Values.cnpCluster.database.name -}}
+{{- else -}}
+{{- .Values.externalDatabase.database -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Get the database username
+*/}}
+{{- define "vaultwarden.database.username" -}}
+{{- if .Values.cnpCluster.enabled -}}
+{{- .Values.cnpCluster.database.username -}}
+{{- else -}}
+{{- .Values.externalDatabase.username -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Get the Postgresql credentials secret.
 */}}
 {{- define "vaultwarden.databaseSecretName" -}}
-{{- if .Values.postgresql.enabled }}
-    {{- if .Values.postgresql.auth.existingSecret -}}
-    {{- print .Values.postgresql.auth.existingSecret -}}
-    {{- else -}}
-    {{- print (include "vaultwarden.postgresql.fullname" .) -}}
-    {{- end -}}
-{{- else if .Values.externalDatabase.existingSecret -}}
-    {{- print .Values.externalDatabase.existingSecret -}}
+{{- if .Values.cnpCluster.enabled -}}
+{{- include "vaultwarden.cnp.secretName" . -}}
 {{- else -}}
-    {{- printf "%s-%s" (include "common.names.fullname" .) "externaldb" -}}
+{{- default (printf "%s-externaldb" .Release.Name) (tpl .Values.externalDatabase.existingSecret $) -}}
 {{- end -}}
 {{- end -}}
 
@@ -112,7 +128,7 @@ Return the Database encrypted password
 Add environment variables to configure database values
 */}}
 {{- define "vaultwarden.databaseSecretKey" -}}
-{{- if .Values.postgresql.enabled -}}
+{{- if .Values.cnpCluster.enabled -}}
     {{- print "password" -}}
 {{- else -}}
     {{- if .Values.externalDatabase.existingSecret -}}

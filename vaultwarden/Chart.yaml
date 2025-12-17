@@ -3,15 +3,14 @@ annotations:
   artifacthub.io/images: |
     - name: vaultwarden
       image: docker.io/vaultwarden/server:1.34.3-alpine
+    - name: postgresql
+      image: ghcr.io/cloudnative-pg/postgresql:18.1-system-trixie
   artifacthub.io/license: MIT
+  artifacthub.io/containsSecurityUpdates: "false"
 name: vaultwarden
 apiVersion: v2
 appVersion: 1.34.3
 dependencies:
-  - condition: postgresql.enabled
-    name: postgresql
-    repository: https://charts.bitnami.com/bitnami
-    version: 18.x
   - name: common
     repository: https://charts.bitnami.com/bitnami
     tags:
@@ -21,7 +20,6 @@ description: Vaultwarden is an unofficial Bitwarden-compatible server written in
 home: https://lab.frogg.it/doca/vaultwarden-helm
 icon: "https://raw.githubusercontent.com/dani-garcia/vaultwarden/refs/heads/main/resources/vaultwarden-icon.svg"
 keywords:
-  - Rust
   - vaultwarden
 maintainers:
   - name: Benoît Pourre
@@ -30,4 +28,4 @@ maintainers:
 sources:
   - https://lab.frogg.it/doca/vaultwarden-helm
   - https://github.com/dani-garcia/vaultwarden
-version: 0.4.1
+version: 1.0.0

@@ -600,25 +600,56 @@ database:
 
 ## @section Database parameters
 
-## PostgreSQL chart configuration
-## ref: https://github.com/bitnami/charts/blob/main/bitnami/postgresql/values.yaml
-## @param postgresql.enabled Switch to enable or disable the PostgreSQL helm chart
-## @param postgresql.auth.username Name for a custom user to create
-## @param postgresql.auth.password Password for the custom user to create
-## @param postgresql.auth.database Name for a custom database to create
-## @param postgresql.auth.existingSecret Name of existing secret to use for PostgreSQL credentials
-## @param postgresql.architecture PostgreSQL architecture (`standalone` or `replication`)
+## CloudNativePG Cluster configuration
+## Requires CloudNativePG operator to be pre-installed
+## ref: https://cloudnative-pg.io/
+## @param cnpCluster.enabled Enable CloudNativePG cluster deployment
+## @param cnpCluster.instances Number of PostgreSQL instances (1 for single instance)
+## @param cnpCluster.storage.size Storage size for PostgreSQL data
+## @param cnpCluster.storage.storageClass Storage class for PostgreSQL PVCs
+## @param cnpCluster.storage.pvcTemplate Additional PVC template configuration for PostgreSQL PVCs
+## @param cnpCluster.database.name Database name
+## @param cnpCluster.database.username Database username
+## @param cnpCluster.database.existingSecret Existing secret with database credentials
+## @param cnpCluster.resources Resource requests and limits for PostgreSQL pod
+## @param cnpCluster.affinity Affinity configuration for PostgreSQL pod
+## @param cnpCluster.tolerations Tolerations for PostgreSQL pod
+## @param cnpCluster.nodeSelector Node selector for PostgreSQL pod
+## @param cnpCluster.monitoring.enabled Enable monitoring with PodMonitor
+## @param cnpCluster.backup.enabled Enable Barman plugin WAL backup configuration
+## ref: https://cloudnative-pg.io/plugin-barman-cloud/docs/usage/
+## @param cnpCluster.backup.barmanObjectName Barman ObjectStore name for backup
+## ref: https://cloudnative-pg.io/plugin-barman-cloud/docs/object_stores/
+## @param cnpCluster.superuserSecret Secret containing superuser credentials for the cluster
+## @param cnpCluster.tls.enabled Enable TLS encryption for the cluster (requires cert-manager)
+## ref: https://cloudnative-pg.io/documentation/current/certificates/#server-tls-secret
 ##
-postgresql:
-  enabled: true
-  auth:
+cnpCluster:
+  enabled: false
+  instances: 1
+  storage:
+    size: 10Gi
+    storageClass: ""
+    pvcTemplate: {}
+  database:
+    name: vaultwarden
     username: vaultwarden
-    password: ""
-    database: vaultwarden
     existingSecret: ""
-  architecture: standalone
+  resources: {}
+  affinity: {}
+  tolerations: {}
+  nodeSelector: {}
+  monitoring:
+    enabled: true
+  backup:
+    enabled: false
+    barmanObjectName: ""
+  superuserSecret: ""
+  tls:
+    enabled: true
+
 ## External PostgreSQL configuration
-## All of these values are only used when postgresql.enabled is set to false
+## All of these values are only used when cnpCluster.enabled is set to false
 ## @param externalDatabase.host Database host
 ## @param externalDatabase.port Database port number
 ## @param externalDatabase.username Non-root username for vaultwarden
@@ -693,6 +724,9 @@ tls:
   ## Base subject details for certificate generation, node_dn filtering, admin_dn 
   ##
   subject:
+    ## @param tls.subject.organizationalUnits Subject's organizational units
+    ##
+    organizationalUnits: "vaultwarden"
     ## @param tls.subject.organizations Subject's organization
     ##
     organizations: "vaultwarden"
@@ -709,3 +743,28 @@ tls:
     ## @param tls.issuerRef.group Group of the cert-manager issuer resource (defaults to "cert-manager.io")
     ##
     group: "cert-manager.io"
+
+## @section Auxiliary image parameters
+##
+
+## @param auxiliaryImage.registry [default: REGISTRY_NAME] Auxiliary image registry
+## @param auxiliaryImage.repository [default: REPOSITORY_NAME/postgresql] Auxiliary image repository
+## @skip auxiliaryImage.tag Auxiliary image tag (immutabe tags are recommended)
+## @param auxiliaryImage.digest Auxiliary image digest in the way sha256:aa.... Please note this parameter, if set, will override the tag
+## @param auxiliaryImage.pullPolicy Auxiliary image pull policy
+## @param auxiliaryImage.pullSecrets Auxiliary image pull secrets
+##
+auxiliaryImage:
+  registry: ghcr.io
+  repository: cloudnative-pg/postgresql
+  tag: 18.1-system-trixie
+  digest: ""
+  pullPolicy: IfNotPresent
+  ## Optionally specify an array of imagePullSecrets.
+  ## Secrets must be manually created in the namespace.
+  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+  ## e.g:
+  ## pullSecrets:
+  ##   - myRegistryKeySecretName
+  ##
+  pullSecrets: []
