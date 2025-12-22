@@ -69,7 +69,7 @@ spec:
       terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
       {{- end }}
       initContainers:
-        {{- if .Values.cnpCluster.enabled }}
+        {{- if .Values.postgresql.enabled }}
         # Wait for CNP cluster to be ready
         # This init container is for avoiding CrashLoopback errors in the Hub container because the PostgreSQL container is not ready
         - name: wait-for-db

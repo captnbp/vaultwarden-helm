@@ -39,7 +39,7 @@ kubectl apply -f https://raw.githubusercontent.com/cloudnative-pg/cloudnative-pg
 2. **Update your values**: The PostgreSQL configuration has changed. Update your `values.yaml`:
 
 ```yaml
-cnpCluster:
+postgresql:
   enabled: true
   instances: 1
   storage:
@@ -268,23 +268,24 @@ $ helm delete --purge my-release
 
 | Name                                         | Description                                                             | Value         |
 | -------------------------------------------- | ----------------------------------------------------------------------- | ------------- |
-| `cnpCluster.enabled`                         | Enable CloudNativePG cluster deployment                                 | `false`       |
-| `cnpCluster.instances`                       | Number of PostgreSQL instances (1 for single instance)                  | `1`           |
-| `cnpCluster.storage.size`                    | Storage size for PostgreSQL data                                        | `10Gi`        |
-| `cnpCluster.storage.storageClass`            | Storage class for PostgreSQL PVCs                                       | `""`          |
-| `cnpCluster.storage.pvcTemplate`             | Additional PVC template configuration for PostgreSQL PVCs               | `{}`          |
-| `cnpCluster.database.name`                   | Database name                                                           | `vaultwarden` |
-| `cnpCluster.database.username`               | Database username                                                       | `vaultwarden` |
-| `cnpCluster.database.existingSecret`         | Existing secret with database credentials                               | `""`          |
-| `cnpCluster.resources`                       | Resource requests and limits for PostgreSQL pod                         | `{}`          |
-| `cnpCluster.affinity`                        | Affinity configuration for PostgreSQL pod                               | `{}`          |
-| `cnpCluster.tolerations`                     | Tolerations for PostgreSQL pod                                          | `{}`          |
-| `cnpCluster.nodeSelector`                    | Node selector for PostgreSQL pod                                        | `{}`          |
-| `cnpCluster.monitoring.enabled`              | Enable monitoring with PodMonitor                                       | `true`        |
-| `cnpCluster.backup.enabled`                  | Enable Barman plugin WAL backup configuration                           | `false`       |
-| `cnpCluster.backup.barmanObjectName`         | Barman ObjectStore name for backup                                      | `""`          |
-| `cnpCluster.superuserSecret`                 | Secret containing superuser credentials for the cluster                 | `""`          |
-| `cnpCluster.tls.enabled`                     | Enable TLS encryption for the cluster (requires cert-manager)           | `true`        |
+| `postgresql.enabled`                         | Enable CloudNativePG cluster deployment                                 | `false`       |
+| `postgresql.instances`                       | Number of PostgreSQL instances (1 for single instance)                  | `1`           |
+| `postgresql.parameters`                      | Postgresql parameters                                                   | `{}`          |
+| `postgresql.storage.size`                    | Storage size for PostgreSQL data                                        | `10Gi`        |
+| `postgresql.storage.storageClass`            | Storage class for PostgreSQL PVCs                                       | `""`          |
+| `postgresql.storage.pvcTemplate`             | Additional PVC template configuration for PostgreSQL PVCs               | `{}`          |
+| `postgresql.database.name`                   | Database name                                                           | `vaultwarden` |
+| `postgresql.database.username`               | Database username                                                       | `vaultwarden` |
+| `postgresql.database.existingSecret`         | Existing secret with database credentials                               | `""`          |
+| `postgresql.resources`                       | Resource requests and limits for PostgreSQL pod                         | `{}`          |
+| `postgresql.affinity`                        | Affinity configuration for PostgreSQL pod                               | `{}`          |
+| `postgresql.tolerations`                     | Tolerations for PostgreSQL pod                                          | `{}`          |
+| `postgresql.nodeSelector`                    | Node selector for PostgreSQL pod                                        | `{}`          |
+| `postgresql.monitoring.enabled`              | Enable monitoring with PodMonitor                                       | `true`        |
+| `postgresql.backup.enabled`                  | Enable Barman plugin WAL backup configuration                           | `false`       |
+| `postgresql.backup.barmanObjectName`         | Barman ObjectStore name for backup                                      | `""`          |
+| `postgresql.superuserSecret`                 | Secret containing superuser credentials for the cluster                 | `""`          |
+| `postgresql.tls.enabled`                     | Enable TLS encryption for the cluster (requires cert-manager)           | `true`        |
 | `externalDatabase.host`                      | Database host                                                           | `""`          |
 | `externalDatabase.port`                      | Database port number                                                    | `5432`        |
 | `externalDatabase.username`                  | Non-root username for vaultwarden                                       | `vaultwarden` |
