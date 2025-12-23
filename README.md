@@ -120,10 +120,57 @@ $ helm install my-release oci://registry-1.docker.io/captnbp/vaultwarden
 
 ## Prerequisites
 
-- Kubernetes 1.19+
+- Kubernetes 1.30+
 - Helm 3.2.0+
 - PV provisioner support in the underlying infrastructure
 - [cert-manager](docs/projects/csi-driver/#supported-volume-attributes)
+- [CloudNativePG Operator](https://cloudnative-pg.io/documentation/current/) (if using PostgreSQL) 1.26+
+
+## Migration from Bitnami PostgreSQL to CloudNativePG
+
+This chart now uses [CloudNativePG](https://cloudnative-pg.io/) instead of Bitnami PostgreSQL for PostgreSQL database support. CloudNativePG is a Kubernetes operator that provides native PostgreSQL management capabilities.
+
+### Key Changes
+
+1. **Operator-based management**: CNPG uses a Kubernetes operator pattern for managing PostgreSQL clusters
+2. **Native Kubernetes integration**: Better integration with Kubernetes APIs and resource management
+3. **Enhanced features**: Support for high availability, backups, monitoring, and more
+
+### Migration Steps
+
+1. **Install CloudNativePG Operator**: Before deploying this chart, ensure the CNPG operator is installed in your cluster:
+
+```bash
+kubectl apply -f https://raw.githubusercontent.com/cloudnative-pg/cloudnative-pg/release-1.28/releases/cnpg-1.28.0.yaml
+```
+
+2. **Update your values**: The PostgreSQL configuration has changed. Update your `values.yaml`:
+
+```yaml
+postgresql:
+  enabled: true
+  instances: 1
+  storage:
+    size: 10Gi
+  auth:
+    username: vaultwarden
+    database: vaultwarden
+```
+
+3. **Backup your data**: If migrating from an existing Bitnami PostgreSQL installation, ensure you have a backup of your database.
+
+4. **Deploy**: Deploy the chart as usual. The CNPG operator will automatically create and manage the PostgreSQL cluster.
+
+### Benefits of CNPG
+
+- **Native Kubernetes integration**: Uses Kubernetes Custom Resource Definitions (CRDs)
+- **Automated management**: Automatic failover, backups, and monitoring
+- **Scalability**: Easy to scale PostgreSQL instances
+- **High availability**: Built-in support for HA configurations
+- **Backup and recovery**: Integrated backup solutions
+
+> **Note**: If you were using external PostgreSQL, no changes are needed. The external database configuration remains the same.
+=======
 
 ## Installing the Chart
 
@@ -329,12 +376,24 @@ $ helm delete --purge my-release
 
 | Name                                         | Description                                                             | Value         |
 | -------------------------------------------- | ----------------------------------------------------------------------- | ------------- |
-| `postgresql.enabled`                         | Switch to enable or disable the PostgreSQL helm chart                   | `true`        |
-| `postgresql.auth.username`                   | Name for a custom user to create                                        | `vaultwarden` |
-| `postgresql.auth.password`                   | Password for the custom user to create                                  | `""`          |
-| `postgresql.auth.database`                   | Name for a custom database to create                                    | `vaultwarden` |
-| `postgresql.auth.existingSecret`             | Name of existing secret to use for PostgreSQL credentials               | `""`          |
-| `postgresql.architecture`                    | PostgreSQL architecture (`standalone` or `replication`)                 | `standalone`  |
+| `postgresql.enabled`                         | Enable CloudNativePG cluster deployment                                 | `false`       |
+| `postgresql.instances`                       | Number of PostgreSQL instances (1 for single instance)                  | `1`           |
+| `postgresql.parameters`                      | Postgresql parameters                                                   | `{}`          |
+| `postgresql.storage.size`                    | Storage size for PostgreSQL data                                        | `10Gi`        |
+| `postgresql.storage.storageClass`            | Storage class for PostgreSQL PVCs                                       | `""`          |
+| `postgresql.storage.pvcTemplate`             | Additional PVC template configuration for PostgreSQL PVCs               | `{}`          |
+| `postgresql.database.name`                   | Database name                                                           | `vaultwarden` |
+| `postgresql.database.username`               | Database username                                                       | `vaultwarden` |
+| `postgresql.database.existingSecret`         | Existing secret with database credentials                               | `""`          |
+| `postgresql.resources`                       | Resource requests and limits for PostgreSQL pod                         | `{}`          |
+| `postgresql.affinity`                        | Affinity configuration for PostgreSQL pod                               | `{}`          |
+| `postgresql.tolerations`                     | Tolerations for PostgreSQL pod                                          | `{}`          |
+| `postgresql.nodeSelector`                    | Node selector for PostgreSQL pod                                        | `{}`          |
+| `postgresql.monitoring.enabled`              | Enable monitoring with PodMonitor                                       | `true`        |
+| `postgresql.backup.enabled`                  | Enable Barman plugin WAL backup configuration                           | `false`       |
+| `postgresql.backup.barmanObjectName`         | Barman ObjectStore name for backup                                      | `""`          |
+| `postgresql.superuserSecret`                 | Secret containing superuser credentials for the cluster                 | `""`          |
+| `postgresql.tls.enabled`                     | Enable TLS encryption for the cluster (requires cert-manager)           | `true`        |
 | `externalDatabase.host`                      | Database host                                                           | `""`          |
 | `externalDatabase.port`                      | Database port number                                                    | `5432`        |
 | `externalDatabase.username`                  | Non-root username for vaultwarden                                       | `vaultwarden` |
@@ -358,6 +417,38 @@ $ helm delete --purge my-release
 | `smtp.acceptInvalidCerts`     | Accept Invalid Certificates           | `false`    |
 | `smtp.debug`                  | SMTP debugging                        | `false`    |
 
+### NetworkPolicy Configuration
+
+| Name                                                                        | Description                                 | Value                  |
+| --------------------------------------------------------------------------- | ------------------------------------------- | ---------------------- |
+| `networkPolicy.vaultwarden.enabled`                                         | Enable NetworkPolicy for Vaultwarden        | `false`                |
+| `networkPolicy.vaultwarden.policyTypes`                                     | Policy types (Ingress, Egress)              | `["Ingress","Egress"]` |
+| `networkPolicy.vaultwarden.ingress.fromIngressController.enabled`           | Allow traffic from Ingress Controller       | `true`                 |
+| `networkPolicy.vaultwarden.ingress.fromIngressController.namespaceSelector` | Namespace selector for Ingress Controller   | `{}`                   |
+| `networkPolicy.vaultwarden.ingress.fromIngressController.podSelector`       | Pod selector for Ingress Controller         | `{}`                   |
+| `networkPolicy.vaultwarden.ingress.fromMonitoring.enabled`                  | Allow traffic from monitoring namespace     | `false`                |
+| `networkPolicy.vaultwarden.ingress.fromMonitoring.namespaceSelector`        | Namespace selector for monitoring           | `{}`                   |
+| `networkPolicy.vaultwarden.ingress.fromMonitoring.podSelector`              | Pod selector for monitoring                 | `{}`                   |
+| `networkPolicy.vaultwarden.egress.toPostgresql.enabled`                     | Allow traffic to PostgreSQL                 | `true`                 |
+| `networkPolicy.vaultwarden.egress.toDNS.enabled`                            | Allow traffic to DNS                        | `true`                 |
+| `networkPolicy.vaultwarden.egress.toSMTP.enabled`                           | Allow traffic to SMTP servers               | `true`                 |
+| `networkPolicy.vaultwarden.egress.toSMTP.ports`                             | SMTP ports to allow                         | `[]`                   |
+| `networkPolicy.vaultwarden.egress.toInternet.enabled`                       | Allow traffic to Internet                   | `true`                 |
+| `networkPolicy.postgresql.enabled`                                          | Enable NetworkPolicy for PostgreSQL CNPG    | `false`                |
+| `networkPolicy.postgresql.policyTypes`                                      | Policy types (Ingress, Egress)              | `["Ingress","Egress"]` |
+| `networkPolicy.postgresql.ingress.fromVaultwarden.enabled`                  | Allow traffic from Vaultwarden              | `true`                 |
+| `networkPolicy.postgresql.ingress.fromMonitoring.enabled`                   | Allow traffic from monitoring namespace     | `false`                |
+| `networkPolicy.postgresql.ingress.fromMonitoring.namespaceSelector`         | Namespace selector for monitoring           | `{}`                   |
+| `networkPolicy.postgresql.ingress.fromMonitoring.podSelector`               | Pod selector for monitoring                 | `{}`                   |
+| `networkPolicy.postgresql.ingress.fromPostgresqlInstances.enabled`          | Allow traffic between PostgreSQL instances  | `true`                 |
+| `networkPolicy.postgresql.ingress.fromCNPG.enabled`                         | Allow traffic from CNPG operator            | `true`                 |
+| `networkPolicy.postgresql.ingress.fromCNPG.namespaceSelector`               | Namespace selector for CNPG operator        | `{}`                   |
+| `networkPolicy.postgresql.ingress.fromCNPG.podSelector`                     | Pod selector for CNPG operator              | `{}`                   |
+| `networkPolicy.postgresql.egress.toDNS.enabled`                             | Allow traffic to DNS                        | `true`                 |
+| `networkPolicy.postgresql.egress.toObjectStorage.enabled`                   | Allow traffic to Object Storage for backups | `false`                |
+| `networkPolicy.postgresql.egress.toObjectStorage.cidrBlocks`                | CIDR blocks for Object Storage              | `["0.0.0.0/0"]`        |
+| `networkPolicy.postgresql.egress.toPostgresqlInstances.enabled`             | Allow traffic between PostgreSQL instances  | `true`                 |
+
 ### Global TLS settings for internal CA
 
 | Name                               | Description                                                                                | Value             |
@@ -365,11 +456,22 @@ $ helm delete --purge my-release
 | `tls.enabled`                      | Enable internal TLS between Ingress controller and unifi                                   | `true`            |
 | `tls.autoGenerated`                | Create cert-manager signed TLS certificates.                                               | `true`            |
 | `tls.existingSecret`               | Existing secret containing the certificates for Unifi                                      | `""`              |
+| `tls.subject.organizationalUnits`  | Subject's organizational units                                                             | `vaultwarden`     |
 | `tls.subject.organizations`        | Subject's organization                                                                     | `vaultwarden`     |
 | `tls.subject.countries`            | Subject's country                                                                          | `fr`              |
 | `tls.issuerRef.existingIssuerName` | Existing name of the cert-manager http issuer. If provided, it won't create a default one. | `""`              |
 | `tls.issuerRef.kind`               | Kind of the cert-manager issuer resource (defaults to "Issuer")                            | `Issuer`          |
 | `tls.issuerRef.group`              | Group of the cert-manager issuer resource (defaults to "cert-manager.io")                  | `cert-manager.io` |
+
+### Auxiliary image parameters
+
+| Name                         | Description                                                                                               | Value                        |
+| ---------------------------- | --------------------------------------------------------------------------------------------------------- | ---------------------------- |
+| `auxiliaryImage.registry`    | Auxiliary image registry                                                                                  | `REGISTRY_NAME`              |
+| `auxiliaryImage.repository`  | Auxiliary image repository                                                                                | `REPOSITORY_NAME/postgresql` |
+| `auxiliaryImage.digest`      | Auxiliary image digest in the way sha256:aa.... Please note this parameter, if set, will override the tag | `""`                         |
+| `auxiliaryImage.pullPolicy`  | Auxiliary image pull policy                                                                               | `IfNotPresent`               |
+| `auxiliaryImage.pullSecrets` | Auxiliary image pull secrets                                                                              | `[]`                         |
 
 ## License
 
