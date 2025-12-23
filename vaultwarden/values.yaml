@@ -712,6 +712,150 @@ smtp:
   ## @param smtp.debug SMTP debugging
   ##
   debug: false
+## @section NetworkPolicy Configuration
+##
+## NetworkPolicy configuration for Vaultwarden and PostgreSQL
+##
+networkPolicy:
+  ## @param networkPolicy.vaultwarden.enabled Enable NetworkPolicy for Vaultwarden
+  ## @param networkPolicy.vaultwarden.policyTypes Policy types (Ingress, Egress)
+  ##
+  vaultwarden:
+    enabled: false
+    policyTypes:
+      - Ingress
+      - Egress
+    
+    ## Ingress rules configuration
+    ##
+    ingress:
+      ## @param networkPolicy.vaultwarden.ingress.fromIngressController.enabled Allow traffic from Ingress Controller
+      ## @param networkPolicy.vaultwarden.ingress.fromIngressController.namespaceSelector [object] Namespace selector for Ingress Controller
+      ## @param networkPolicy.vaultwarden.ingress.fromIngressController.podSelector [object] Pod selector for Ingress Controller
+      ##
+      fromIngressController:
+        enabled: true
+        namespaceSelector:
+          kubernetes.io/metadata.name: ingress-nginx
+        podSelector:
+          app.kubernetes.io/component: controller
+          app.kubernetes.io/instance: ingress-nginx
+          app.kubernetes.io/name: ingress-nginx
+        # Alternative for Traefik:
+        # namespaceSelector:
+        #   kubernetes.io/metadata.name: traefik
+        # podSelector:
+        #   app.kubernetes.io/name: traefik
+        #   app.kubernetes.io/instance: traefik-traefik
+      
+      ## @param networkPolicy.vaultwarden.ingress.fromMonitoring.enabled Allow traffic from monitoring namespace
+      ## @param networkPolicy.vaultwarden.ingress.fromMonitoring.namespaceSelector [object] Namespace selector for monitoring
+      ## @param networkPolicy.vaultwarden.ingress.fromMonitoring.podSelector [object] Pod selector for monitoring
+      ##
+      fromMonitoring:
+        enabled: false
+        namespaceSelector:
+          kubernetes.io/metadata.name: kube-prometheus-stack
+        podSelector:
+          app.kubernetes.io/instance: kube-prometheus-stack-prometheus
+          app.kubernetes.io/name: prometheus
+          prometheus: kube-prometheus-stack-prometheus
+    
+    ## Egress rules configuration
+    ##
+    egress:
+      ## @param networkPolicy.vaultwarden.egress.toPostgresql.enabled Allow traffic to PostgreSQL
+      ##
+      toPostgresql:
+        enabled: true
+      
+      ## @param networkPolicy.vaultwarden.egress.toDNS.enabled Allow traffic to DNS
+      ##
+      toDNS:
+        enabled: true
+      
+      ## @param networkPolicy.vaultwarden.egress.toSMTP.enabled Allow traffic to SMTP servers
+      ## @param networkPolicy.vaultwarden.egress.toSMTP.ports [array] SMTP ports to allow
+      ##
+      toSMTP:
+        enabled: true
+        ports:
+          - 25
+          - 587
+          - 465
+      
+      ## @param networkPolicy.vaultwarden.egress.toInternet.enabled Allow traffic to Internet
+      ##
+      toInternet:
+        enabled: true
+
+  ## @param networkPolicy.postgresql.enabled Enable NetworkPolicy for PostgreSQL CNPG
+  ## @param networkPolicy.postgresql.policyTypes Policy types (Ingress, Egress)
+  ##
+  postgresql:
+    enabled: false
+    policyTypes:
+      - Ingress
+      - Egress
+    
+    ## Ingress rules configuration
+    ##
+    ingress:
+      ## @param networkPolicy.postgresql.ingress.fromVaultwarden.enabled Allow traffic from Vaultwarden
+      ##
+      fromVaultwarden:
+        enabled: true
+      
+      ## @param networkPolicy.postgresql.ingress.fromMonitoring.enabled Allow traffic from monitoring namespace
+      ## @param networkPolicy.postgresql.ingress.fromMonitoring.namespaceSelector [object] Namespace selector for monitoring
+      ## @param networkPolicy.postgresql.ingress.fromMonitoring.podSelector [object] Pod selector for monitoring
+      ##
+      fromMonitoring:
+        enabled: false
+        namespaceSelector:
+          kubernetes.io/metadata.name: kube-prometheus-stack
+        podSelector:
+          app.kubernetes.io/instance: kube-prometheus-stack-prometheus
+          app.kubernetes.io/name: prometheus
+          prometheus: kube-prometheus-stack-prometheus
+      
+      ## @param networkPolicy.postgresql.ingress.fromPostgresqlInstances.enabled Allow traffic between PostgreSQL instances
+      ##
+      fromPostgresqlInstances:
+        enabled: true
+      
+      ## @param networkPolicy.postgresql.ingress.fromCNPG.enabled Allow traffic from CNPG operator
+      ## @param networkPolicy.postgresql.ingress.fromCNPG.namespaceSelector [object] Namespace selector for CNPG operator
+      ## @param networkPolicy.postgresql.ingress.fromCNPG.podSelector [object] Pod selector for CNPG operator
+      ##
+      fromCNPG:
+        enabled: true
+        namespaceSelector:
+          kubernetes.io/metadata.name: cnpg-system
+        podSelector:
+          app.kubernetes.io/name: cloudnative-pg
+    
+    ## Egress rules configuration
+    ##
+    egress:
+      ## @param networkPolicy.postgresql.egress.toDNS.enabled Allow traffic to DNS
+      ##
+      toDNS:
+        enabled: true
+      
+      ## @param networkPolicy.postgresql.egress.toObjectStorage.enabled Allow traffic to Object Storage for backups
+      ## @param networkPolicy.postgresql.egress.toObjectStorage.cidrBlocks CIDR blocks for Object Storage
+      ##
+      toObjectStorage:
+        enabled: false
+        cidrBlocks:
+          - 0.0.0.0/0
+      
+      ## @param networkPolicy.postgresql.egress.toPostgresqlInstances.enabled Allow traffic between PostgreSQL instances
+      ##
+      toPostgresqlInstances:
+        enabled: true
+
 
 ## @section Global TLS settings for internal CA
 ##

@@ -309,6 +309,38 @@ $ helm delete --purge my-release
 | `smtp.acceptInvalidCerts`     | Accept Invalid Certificates           | `false`    |
 | `smtp.debug`                  | SMTP debugging                        | `false`    |
 
+### NetworkPolicy Configuration
+
+| Name                                                                        | Description                                 | Value                  |
+| --------------------------------------------------------------------------- | ------------------------------------------- | ---------------------- |
+| `networkPolicy.vaultwarden.enabled`                                         | Enable NetworkPolicy for Vaultwarden        | `false`                |
+| `networkPolicy.vaultwarden.policyTypes`                                     | Policy types (Ingress, Egress)              | `["Ingress","Egress"]` |
+| `networkPolicy.vaultwarden.ingress.fromIngressController.enabled`           | Allow traffic from Ingress Controller       | `true`                 |
+| `networkPolicy.vaultwarden.ingress.fromIngressController.namespaceSelector` | Namespace selector for Ingress Controller   | `{}`                   |
+| `networkPolicy.vaultwarden.ingress.fromIngressController.podSelector`       | Pod selector for Ingress Controller         | `{}`                   |
+| `networkPolicy.vaultwarden.ingress.fromMonitoring.enabled`                  | Allow traffic from monitoring namespace     | `false`                |
+| `networkPolicy.vaultwarden.ingress.fromMonitoring.namespaceSelector`        | Namespace selector for monitoring           | `{}`                   |
+| `networkPolicy.vaultwarden.ingress.fromMonitoring.podSelector`              | Pod selector for monitoring                 | `{}`                   |
+| `networkPolicy.vaultwarden.egress.toPostgresql.enabled`                     | Allow traffic to PostgreSQL                 | `true`                 |
+| `networkPolicy.vaultwarden.egress.toDNS.enabled`                            | Allow traffic to DNS                        | `true`                 |
+| `networkPolicy.vaultwarden.egress.toSMTP.enabled`                           | Allow traffic to SMTP servers               | `true`                 |
+| `networkPolicy.vaultwarden.egress.toSMTP.ports`                             | SMTP ports to allow                         | `[]`                   |
+| `networkPolicy.vaultwarden.egress.toInternet.enabled`                       | Allow traffic to Internet                   | `true`                 |
+| `networkPolicy.postgresql.enabled`                                          | Enable NetworkPolicy for PostgreSQL CNPG    | `false`                |
+| `networkPolicy.postgresql.policyTypes`                                      | Policy types (Ingress, Egress)              | `["Ingress","Egress"]` |
+| `networkPolicy.postgresql.ingress.fromVaultwarden.enabled`                  | Allow traffic from Vaultwarden              | `true`                 |
+| `networkPolicy.postgresql.ingress.fromMonitoring.enabled`                   | Allow traffic from monitoring namespace     | `false`                |
+| `networkPolicy.postgresql.ingress.fromMonitoring.namespaceSelector`         | Namespace selector for monitoring           | `{}`                   |
+| `networkPolicy.postgresql.ingress.fromMonitoring.podSelector`               | Pod selector for monitoring                 | `{}`                   |
+| `networkPolicy.postgresql.ingress.fromPostgresqlInstances.enabled`          | Allow traffic between PostgreSQL instances  | `true`                 |
+| `networkPolicy.postgresql.ingress.fromCNPG.enabled`                         | Allow traffic from CNPG operator            | `true`                 |
+| `networkPolicy.postgresql.ingress.fromCNPG.namespaceSelector`               | Namespace selector for CNPG operator        | `{}`                   |
+| `networkPolicy.postgresql.ingress.fromCNPG.podSelector`                     | Pod selector for CNPG operator              | `{}`                   |
+| `networkPolicy.postgresql.egress.toDNS.enabled`                             | Allow traffic to DNS                        | `true`                 |
+| `networkPolicy.postgresql.egress.toObjectStorage.enabled`                   | Allow traffic to Object Storage for backups | `false`                |
+| `networkPolicy.postgresql.egress.toObjectStorage.cidrBlocks`                | CIDR blocks for Object Storage              | `["0.0.0.0/0"]`        |
+| `networkPolicy.postgresql.egress.toPostgresqlInstances.enabled`             | Allow traffic between PostgreSQL instances  | `true`                 |
+
 ### Global TLS settings for internal CA
 
 | Name                               | Description                                                                                | Value             |
