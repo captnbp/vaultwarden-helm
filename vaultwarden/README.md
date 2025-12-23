@@ -4,6 +4,114 @@
 
 [Vaultwarden](https://github.com/dani-garcia/vaultwarden), formerly known as **Bitwarden_RS**, is an "alternative implementation of the Bitwarden server API written in Rust and compatible with [upstream Bitwarden clients](https://bitwarden.com/download/), perfect for self-hosted deployment where running the official resource-heavy service might not be ideal."
 
+## Architecture
+
+The following diagram illustrates the Vaultwarden Helm chart architecture with network flows when NetworkPolicies are enabled:
+
+```mermaid
+graph TB
+    subgraph Internet["External Network"]
+        Users[Users/Clients]
+        SMTP[SMTP Servers<br/>Ports: 25, 587, 465]
+        ExtServices[External Services<br/>HTTPS: 443, HTTP: 80]
+        S3[Object Storage/S3<br/>Port: 443]
+    end
+
+    subgraph K8s["Kubernetes Cluster"]
+        subgraph IngressNS["Ingress Namespace<br/>ingress-nginx or traefik"]
+            Ingress[Ingress Controller<br/>nginx/traefik]
+        end
+
+        subgraph MonitoringNS["kube-prometheus-stack Namespace<br/>Optional"]
+            Prometheus[Prometheus<br/>Metrics Collection]
+        end
+
+        subgraph VaultwardenNS["Vaultwarden Namespace"]
+            subgraph VWPod["Vaultwarden Pod"]
+                VW[Vaultwarden<br/>Port: 8080]
+            end
+
+            subgraph CNPGCluster["CloudNativePG Cluster"]
+                PG1[PostgreSQL Primary<br/>Port: 5432]
+                PG2[PostgreSQL Replica<br/>Port: 5432]
+            end
+        end
+
+        subgraph SystemNS["kube-system Namespace"]
+            DNS[CoreDNS<br/>Port: 53 UDP/TCP]
+        end
+
+        subgraph CNPGNS["cnpg-system Namespace"]
+            CNPGOp[CNPG Operator<br/>Cluster Management]
+        end
+    end
+
+    Users -->|HTTPS/HTTP| Ingress
+    Ingress -->|HTTP: 8080<br/>NetworkPolicy: Ingress| VW
+    
+    VW -->|PostgreSQL: 5432<br/>NetworkPolicy: Egress| PG1
+    VW -->|DNS: 53<br/>NetworkPolicy: Egress| DNS
+    VW -->|SMTP: 25/587/465<br/>NetworkPolicy: Egress| SMTP
+    VW -->|HTTPS/HTTP: 443/80<br/>NetworkPolicy: Egress| ExtServices
+    
+    PG1 <-->|Replication: 5432<br/>NetworkPolicy: Ingress/Egress| PG2
+    PG1 -->|DNS: 53<br/>NetworkPolicy: Egress| DNS
+    PG2 -->|DNS: 53<br/>NetworkPolicy: Egress| DNS
+    
+    PG1 -.->|Backup: 443<br/>NetworkPolicy: Egress<br/>Optional| S3
+    PG2 -.->|Backup: 443<br/>NetworkPolicy: Egress<br/>Optional| S3
+    
+    CNPGOp -->|Management: 5432, 8000<br/>NetworkPolicy: Ingress| PG1
+    CNPGOp -->|Management: 5432, 8000<br/>NetworkPolicy: Ingress| PG2
+    
+    Prometheus -.->|Metrics: 8080<br/>NetworkPolicy: Ingress<br/>Optional| VW
+    Prometheus -.->|Metrics: 9187<br/>NetworkPolicy: Ingress<br/>Optional| PG1
+    Prometheus -.->|Metrics: 9187<br/>NetworkPolicy: Ingress<br/>Optional| PG2
+
+    classDef vaultwardenStyle fill:#326CE5,stroke:#fff,stroke-width:2px,color:#fff
+    classDef postgresStyle fill:#336791,stroke:#fff,stroke-width:2px,color:#fff
+    classDef ingressStyle fill:#00D9FF,stroke:#fff,stroke-width:2px,color:#000
+    classDef monitoringStyle fill:#E6522C,stroke:#fff,stroke-width:2px,color:#fff
+    classDef externalStyle fill:#FF6B6B,stroke:#fff,stroke-width:2px,color:#fff
+    classDef systemStyle fill:#4CAF50,stroke:#fff,stroke-width:2px,color:#fff
+
+    class VW,VWPod vaultwardenStyle
+    class PG1,PG2,CNPGCluster postgresStyle
+    class Ingress,IngressNS ingressStyle
+    class Prometheus,MonitoringNS monitoringStyle
+    class Users,SMTP,ExtServices,S3,Internet externalStyle
+    class DNS,SystemNS,CNPGOp,CNPGNS systemStyle
+```
+
+### Network Flow Legend
+
+- **Solid lines**: Required network flows
+- **Dashed lines**: Optional network flows (configurable)
+- **NetworkPolicy labels**: Indicate which NetworkPolicy rule controls the flow
+
+### Key Components
+
+1. **Vaultwarden Application**
+   - Receives traffic from Ingress Controller on port 8080
+   - Connects to PostgreSQL database on port 5432
+   - Sends emails via SMTP servers
+   - Accesses external services for push notifications and updates
+
+2. **CloudNativePG Cluster**
+   - Managed by CNPG operator
+   - Supports high availability with primary/replica instances
+   - Replication between instances on port 5432
+   - Optional backup to Object Storage (S3-compatible)
+
+3. **Network Policies**
+   - Control ingress and egress traffic for both Vaultwarden and PostgreSQL
+   - Disabled by default for compatibility
+   - Enable with `networkPolicy.vaultwarden.enabled` and `networkPolicy.postgresql.enabled`
+
+4. **Monitoring (Optional)**
+   - Prometheus can scrape metrics from both Vaultwarden and PostgreSQL
+   - Requires enabling monitoring in NetworkPolicy configuration
+
 ## TL;DR
 
 ```console
@@ -308,6 +416,38 @@ $ helm delete --purge my-release
 | `smtp.acceptInvalidHostnames` | Accept Invalid Hostnames              | `false`    |
 | `smtp.acceptInvalidCerts`     | Accept Invalid Certificates           | `false`    |
 | `smtp.debug`                  | SMTP debugging                        | `false`    |
+
+### NetworkPolicy Configuration
+
+| Name                                                                        | Description                                 | Value                  |
+| --------------------------------------------------------------------------- | ------------------------------------------- | ---------------------- |
+| `networkPolicy.vaultwarden.enabled`                                         | Enable NetworkPolicy for Vaultwarden        | `false`                |
+| `networkPolicy.vaultwarden.policyTypes`                                     | Policy types (Ingress, Egress)              | `["Ingress","Egress"]` |
+| `networkPolicy.vaultwarden.ingress.fromIngressController.enabled`           | Allow traffic from Ingress Controller       | `true`                 |
+| `networkPolicy.vaultwarden.ingress.fromIngressController.namespaceSelector` | Namespace selector for Ingress Controller   | `{}`                   |
+| `networkPolicy.vaultwarden.ingress.fromIngressController.podSelector`       | Pod selector for Ingress Controller         | `{}`                   |
+| `networkPolicy.vaultwarden.ingress.fromMonitoring.enabled`                  | Allow traffic from monitoring namespace     | `false`                |
+| `networkPolicy.vaultwarden.ingress.fromMonitoring.namespaceSelector`        | Namespace selector for monitoring           | `{}`                   |
+| `networkPolicy.vaultwarden.ingress.fromMonitoring.podSelector`              | Pod selector for monitoring                 | `{}`                   |
+| `networkPolicy.vaultwarden.egress.toPostgresql.enabled`                     | Allow traffic to PostgreSQL                 | `true`                 |
+| `networkPolicy.vaultwarden.egress.toDNS.enabled`                            | Allow traffic to DNS                        | `true`                 |
+| `networkPolicy.vaultwarden.egress.toSMTP.enabled`                           | Allow traffic to SMTP servers               | `true`                 |
+| `networkPolicy.vaultwarden.egress.toSMTP.ports`                             | SMTP ports to allow                         | `[]`                   |
+| `networkPolicy.vaultwarden.egress.toInternet.enabled`                       | Allow traffic to Internet                   | `true`                 |
+| `networkPolicy.postgresql.enabled`                                          | Enable NetworkPolicy for PostgreSQL CNPG    | `false`                |
+| `networkPolicy.postgresql.policyTypes`                                      | Policy types (Ingress, Egress)              | `["Ingress","Egress"]` |
+| `networkPolicy.postgresql.ingress.fromVaultwarden.enabled`                  | Allow traffic from Vaultwarden              | `true`                 |
+| `networkPolicy.postgresql.ingress.fromMonitoring.enabled`                   | Allow traffic from monitoring namespace     | `false`                |
+| `networkPolicy.postgresql.ingress.fromMonitoring.namespaceSelector`         | Namespace selector for monitoring           | `{}`                   |
+| `networkPolicy.postgresql.ingress.fromMonitoring.podSelector`               | Pod selector for monitoring                 | `{}`                   |
+| `networkPolicy.postgresql.ingress.fromPostgresqlInstances.enabled`          | Allow traffic between PostgreSQL instances  | `true`                 |
+| `networkPolicy.postgresql.ingress.fromCNPG.enabled`                         | Allow traffic from CNPG operator            | `true`                 |
+| `networkPolicy.postgresql.ingress.fromCNPG.namespaceSelector`               | Namespace selector for CNPG operator        | `{}`                   |
+| `networkPolicy.postgresql.ingress.fromCNPG.podSelector`                     | Pod selector for CNPG operator              | `{}`                   |
+| `networkPolicy.postgresql.egress.toDNS.enabled`                             | Allow traffic to DNS                        | `true`                 |
+| `networkPolicy.postgresql.egress.toObjectStorage.enabled`                   | Allow traffic to Object Storage for backups | `false`                |
+| `networkPolicy.postgresql.egress.toObjectStorage.cidrBlocks`                | CIDR blocks for Object Storage              | `["0.0.0.0/0"]`        |
+| `networkPolicy.postgresql.egress.toPostgresqlInstances.enabled`             | Allow traffic between PostgreSQL instances  | `true`                 |
 
 ### Global TLS settings for internal CA
 
