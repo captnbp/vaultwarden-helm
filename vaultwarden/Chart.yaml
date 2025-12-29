@@ -28,4 +28,4 @@ maintainers:
 sources:
   - https://lab.frogg.it/doca/vaultwarden-helm
   - https://github.com/dani-garcia/vaultwarden
-version: 1.1.1
+version: 1.1.2
