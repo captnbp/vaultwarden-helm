@@ -850,6 +850,7 @@ networkPolicy:
         enabled: false
         cidrBlocks:
           - 0.0.0.0/0
+          - ::/0
       
       ## @param networkPolicy.postgresql.egress.toPostgresqlInstances.enabled Allow traffic between PostgreSQL instances
       ##

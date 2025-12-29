@@ -89,6 +89,8 @@ spec:
     - to:
         - ipBlock:
             cidr: 0.0.0.0/0
+        - ipBlock:
+            cidr: ::/0
       ports:
         {{- range .Values.networkPolicy.vaultwarden.egress.toSMTP.ports }}
         - protocol: TCP
@@ -100,6 +102,8 @@ spec:
     - to:
         - ipBlock:
             cidr: 0.0.0.0/0
+        - ipBlock:
+            cidr: ::/0
       ports:
         - protocol: TCP
           port: 443
