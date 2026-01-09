@@ -69,7 +69,7 @@ spec:
       terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
       {{- end }}
       initContainers:
-        {{- if .Values.postgresql.enabled }}
+        {{- if eq .Values.database.type "postgresql" }}
         # Wait for CNP cluster to be ready
         # This init container is for avoiding CrashLoopback errors in the Hub container because the PostgreSQL container is not ready
         - name: wait-for-db
@@ -139,7 +139,7 @@ spec:
           {{- if .Values.lifecycleHooks }}
           lifecycle: {{- include "common.tplvalues.render" (dict "value" .Values.lifecycleHooks "context" $) | nindent 12 }}
           {{- end }}
-          {{- if ne "default" .Values.database.type }}
+          {{- if eq .Values.database.type "postgresql" }}
           env:
             - name: DATABASE_PASSWORD
               valueFrom:

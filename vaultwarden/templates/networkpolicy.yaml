@@ -2,7 +2,7 @@
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: {{ include "common.names.fullname" . }}
+  name: {{ template "common.names.fullname" . }}
   namespace: {{ include "common.names.namespace" . | quote }}
   labels: {{- include "common.labels.standard" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
     app.kubernetes.io/component: vaultwarden
@@ -14,14 +14,25 @@ spec:
     matchLabels: {{- include "common.labels.matchLabels" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 6 }}
       app.kubernetes.io/component: vaultwarden
   policyTypes:
-    {{- range .Values.networkPolicy.vaultwarden.policyTypes }}
-    - {{ . }}
-    {{- end }}
-  {{- if has "Ingress" .Values.networkPolicy.vaultwarden.policyTypes }}
+    - Ingress
+    - Egress
   ingress:
-    {{- if .Values.networkPolicy.vaultwarden.ingress.fromIngressController.enabled }}
-    # Allow traffic from Ingress Controller
-    - from:
+    {{- if or .Values.networkPolicy.addExternalClientAccess .Values.networkPolicy.vaultwarden.ingress.fromIngressController.enabled }}
+    - ports:
+        - port: {{ .Values.containerPorts.http }}
+          protocol: TCP
+        {{- if .Values.tls.enabled }}
+        - protocol: TCP
+          port: {{ .Values.containerPorts.https }}
+        {{- end }}
+      from:
+        {{- if .Values.networkPolicy.vaultwarden.addExternalClientAccess }}
+        - podSelector:
+            matchLabels:
+              {{ template "common.names.fullname" . }}-client: "true"
+        {{- end }}
+        {{- if .Values.networkPolicy.vaultwarden.ingress.fromIngressController.enabled }}
+        # Allow traffic from Ingress Controller to http port
         - namespaceSelector:
             matchLabels:
               {{- range $key, $value := .Values.networkPolicy.vaultwarden.ingress.fromIngressController.namespaceSelector }}
@@ -34,9 +45,14 @@ spec:
               {{ $key }}: {{ $value | quote }}
               {{- end }}
           {{- end }}
+        {{- end }}
       ports:
+        - port: {{ .Values.containerPorts.http }}
+          protocol: TCP
+        {{- if .Values.tls.enabled }}
         - protocol: TCP
-          port: {{ .Values.containerPorts.http }}
+          port: {{ .Values.containerPorts.https }}
+        {{- end }}
     {{- end }}
     {{- if .Values.networkPolicy.vaultwarden.ingress.fromMonitoring.enabled }}
     # Allow traffic from monitoring namespace
@@ -54,25 +70,17 @@ spec:
               {{- end }}
           {{- end }}
       ports:
+        - port: {{ .Values.containerPorts.http }}
+          protocol: TCP
+        {{- if .Values.tls.enabled }}
         - protocol: TCP
-          port: {{ .Values.containerPorts.http }}
+          port: {{ .Values.containerPorts.https }}
+        {{- end }}
     {{- end }}
-  {{- end }}
-  {{- if has "Egress" .Values.networkPolicy.vaultwarden.policyTypes }}
+    {{- if .Values.networkPolicy.vaultwarden.extraIngress }}
+    {{- include "common.tplvalues.render" ( dict "value" .Values.networkPolicy.vaultwarden.extraIngress "context" $ ) | nindent 4 }}
+    {{- end }}
   egress:
-    {{- if and .Values.networkPolicy.vaultwarden.egress.toPostgresql.enabled .Values.postgresql.enabled }}
-    # Allow traffic to PostgreSQL
-    - to:
-        - podSelector:
-            matchLabels:
-              app.kubernetes.io/name: postgresql
-              app.kubernetes.io/instance: {{ include "vaultwarden.cnp.fullname" . }}
-              app.kubernetes.io/component: database
-      ports:
-        - protocol: TCP
-          port: 5432
-    {{- end }}
-    {{- if .Values.networkPolicy.vaultwarden.egress.toDNS.enabled }}
     # Allow traffic to DNS
     - to:
         - namespaceSelector:
@@ -83,32 +91,32 @@ spec:
           port: 53
         - protocol: TCP
           port: 53
+    {{- if .Values.networkPolicy.vaultwarden.egress.toInternet.enabled }}
+    # Allow traffic to Internet (trackers and peers)
+    - to:
+        {{- range .Values.networkPolicy.vaultwarden.egress.toInternet.cidrBlocks }}
+        - ipBlock:
+            cidr: {{ . }}
+        {{- end }}
+      ports:
+        - protocol: TCP
+        - protocol: UDP
     {{- end }}
     {{- if .Values.networkPolicy.vaultwarden.egress.toSMTP.enabled }}
     # Allow traffic to SMTP servers
     - to:
+        {{- range .Values.networkPolicy.vaultwarden.egress.toSMTP.cidrBlocks }}
         - ipBlock:
-            cidr: 0.0.0.0/0
-        - ipBlock:
-            cidr: ::/0
+            cidr: {{ . }}
+        {{- end }}
       ports:
         {{- range .Values.networkPolicy.vaultwarden.egress.toSMTP.ports }}
         - protocol: TCP
           port: {{ . }}
         {{- end }}
     {{- end }}
-    {{- if .Values.networkPolicy.vaultwarden.egress.toInternet.enabled }}
-    # Allow traffic to Internet (HTTPS/HTTP)
-    - to:
-        - ipBlock:
-            cidr: 0.0.0.0/0
-        - ipBlock:
-            cidr: ::/0
-      ports:
-        - protocol: TCP
-          port: 443
-        - protocol: TCP
-          port: 80
+
+    {{- if .Values.networkPolicy.vaultwarden.egress.extraEgress }}
+    {{- include "common.tplvalues.render" ( dict "value" .Values.vaultwarden.networkPolicy.egress.extraEgress "context" $ ) | nindent 4 }}
     {{- end }}
-  {{- end }}
 {{- end }}

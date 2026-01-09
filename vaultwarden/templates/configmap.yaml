@@ -51,7 +51,7 @@ metadata:
 data:
   database.sh: |-
     #!/bin/sh
-    {{- if and .Values.postgresql.enabled .Values.postgresql.tls.enabled }}
+    {{- if and .Values.postgresql.enabled .Values.postgresql.tls.enabled (eq .Values.database.type "postgresql") }}
     export DATABASE_URL="{{ printf "postgresql://%s:${DATABASE_PASSWORD}@%s:%s/%s?sslmode=require&sslrootcert=/certs/ca.crt" (include "vaultwarden.database.username" .) (include "vaultwarden.database.host" .) (include "vaultwarden.database.port" .) (include "vaultwarden.database.name" .) }}"
     {{- else }}
     export DATABASE_URL="{{ printf "postgresql://%s:${DATABASE_PASSWORD}@%s:%s/%s" (include "vaultwarden.database.username" .) (include "vaultwarden.database.host" .) (include "vaultwarden.database.port" .) (include "vaultwarden.database.name" .) }}"

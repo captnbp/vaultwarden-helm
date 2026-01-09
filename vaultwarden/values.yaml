@@ -626,7 +626,7 @@ database:
 ## ref: https://cloudnative-pg.io/documentation/current/certificates/#server-tls-secret
 ##
 postgresql:
-  enabled: false
+  enabled: true
   instances: 1
   parameters:
       max_connections: "100"
@@ -712,19 +712,16 @@ smtp:
   ## @param smtp.debug SMTP debugging
   ##
   debug: false
+
 ## @section NetworkPolicy Configuration
 ##
-## NetworkPolicy configuration for Vaultwarden and PostgreSQL
+## NetworkPolicy configuration for vaultwarden and PostgreSQL
 ##
 networkPolicy:
-  ## @param networkPolicy.vaultwarden.enabled Enable NetworkPolicy for Vaultwarden
-  ## @param networkPolicy.vaultwarden.policyTypes Policy types (Ingress, Egress)
+  ## @param networkPolicy.vaultwarden.enabled Enable NetworkPolicy for vaultwarden
   ##
   vaultwarden:
-    enabled: false
-    policyTypes:
-      - Ingress
-      - Egress
+    enabled: true
     
     ## Ingress rules configuration
     ##
@@ -764,18 +761,9 @@ networkPolicy:
     ## Egress rules configuration
     ##
     egress:
-      ## @param networkPolicy.vaultwarden.egress.toPostgresql.enabled Allow traffic to PostgreSQL
-      ##
-      toPostgresql:
-        enabled: true
-      
-      ## @param networkPolicy.vaultwarden.egress.toDNS.enabled Allow traffic to DNS
-      ##
-      toDNS:
-        enabled: true
-      
       ## @param networkPolicy.vaultwarden.egress.toSMTP.enabled Allow traffic to SMTP servers
       ## @param networkPolicy.vaultwarden.egress.toSMTP.ports [array] SMTP ports to allow
+      ## @param networkPolicy.vaultwarden.egress.toSMTP.cidrBlocks CIDR blocks to SMTP
       ##
       toSMTP:
         enabled: true
@@ -783,35 +771,50 @@ networkPolicy:
           - 25
           - 587
           - 465
+        cidrBlocks:
+          - 0.0.0.0/0
+          - ::/0
       
       ## @param networkPolicy.vaultwarden.egress.toInternet.enabled Allow traffic to Internet
+      ## @param networkPolicy.vaultwarden.egress.toInternet.cidrBlocks CIDR blocks to Internet
       ##
       toInternet:
         enabled: true
+        cidrBlocks:
+          - 0.0.0.0/0
+          - ::/0
+      ## @param networkPolicy.vaultwarden.egress.extraEgress [array] Add extra ingress rules to the NetworkPolicy (ignored if allowExternalEgress=true)
+      ## e.g:
+      ## extraEgress:
+      ##   - ports:
+      ##       - port: 1234
+      ##     to:
+      ##       - podSelector:
+      ##           - matchLabels:
+      ##               - role: frontend
+      ##       - podSelector:
+      ##           - matchExpressions:
+      ##               - key: role
+      ##                 operator: In
+      ##                 values:
+      ##                   - frontend
+      ##
+      extraEgress: []
 
   ## @param networkPolicy.postgresql.enabled Enable NetworkPolicy for PostgreSQL CNPG
-  ## @param networkPolicy.postgresql.policyTypes Policy types (Ingress, Egress)
   ##
   postgresql:
-    enabled: false
-    policyTypes:
-      - Ingress
-      - Egress
+    enabled: true
     
     ## Ingress rules configuration
     ##
-    ingress:
-      ## @param networkPolicy.postgresql.ingress.fromVaultwarden.enabled Allow traffic from Vaultwarden
-      ##
-      fromVaultwarden:
-        enabled: true
-      
+    ingress:      
       ## @param networkPolicy.postgresql.ingress.fromMonitoring.enabled Allow traffic from monitoring namespace
       ## @param networkPolicy.postgresql.ingress.fromMonitoring.namespaceSelector [object] Namespace selector for monitoring
       ## @param networkPolicy.postgresql.ingress.fromMonitoring.podSelector [object] Pod selector for monitoring
       ##
       fromMonitoring:
-        enabled: false
+        enabled: true
         namespaceSelector:
           kubernetes.io/metadata.name: kube-prometheus-stack
         podSelector:
@@ -838,11 +841,6 @@ networkPolicy:
     ## Egress rules configuration
     ##
     egress:
-      ## @param networkPolicy.postgresql.egress.toDNS.enabled Allow traffic to DNS
-      ##
-      toDNS:
-        enabled: true
-      
       ## @param networkPolicy.postgresql.egress.toObjectStorage.enabled Allow traffic to Object Storage for backups
       ## @param networkPolicy.postgresql.egress.toObjectStorage.cidrBlocks CIDR blocks for Object Storage
       ##
@@ -851,12 +849,6 @@ networkPolicy:
         cidrBlocks:
           - 0.0.0.0/0
           - ::/0
-      
-      ## @param networkPolicy.postgresql.egress.toPostgresqlInstances.enabled Allow traffic between PostgreSQL instances
-      ##
-      toPostgresqlInstances:
-        enabled: true
-
 
 ## @section Global TLS settings for internal CA
 ##
