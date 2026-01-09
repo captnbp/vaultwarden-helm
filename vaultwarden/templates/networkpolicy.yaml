@@ -21,10 +21,6 @@ spec:
     - ports:
         - port: {{ .Values.containerPorts.http }}
           protocol: TCP
-        {{- if .Values.tls.enabled }}
-        - protocol: TCP
-          port: {{ .Values.containerPorts.https }}
-        {{- end }}
       from:
         {{- if .Values.networkPolicy.vaultwarden.addExternalClientAccess }}
         - podSelector:
@@ -49,10 +45,6 @@ spec:
       ports:
         - port: {{ .Values.containerPorts.http }}
           protocol: TCP
-        {{- if .Values.tls.enabled }}
-        - protocol: TCP
-          port: {{ .Values.containerPorts.https }}
-        {{- end }}
     {{- end }}
     {{- if .Values.networkPolicy.vaultwarden.ingress.fromMonitoring.enabled }}
     # Allow traffic from monitoring namespace
@@ -72,10 +64,6 @@ spec:
       ports:
         - port: {{ .Values.containerPorts.http }}
           protocol: TCP
-        {{- if .Values.tls.enabled }}
-        - protocol: TCP
-          port: {{ .Values.containerPorts.https }}
-        {{- end }}
     {{- end }}
     {{- if .Values.networkPolicy.vaultwarden.extraIngress }}
     {{- include "common.tplvalues.render" ( dict "value" .Values.networkPolicy.vaultwarden.extraIngress "context" $ ) | nindent 4 }}
