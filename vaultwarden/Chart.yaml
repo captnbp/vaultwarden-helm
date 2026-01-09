@@ -2,14 +2,14 @@ annotations:
   category: DeveloperTools
   artifacthub.io/images: |
     - name: vaultwarden
-      image: docker.io/vaultwarden/server:1.35.1-alpine
+      image: docker.io/vaultwarden/server:1.35.2-alpine
     - name: postgresql
       image: ghcr.io/cloudnative-pg/postgresql:18.1-system-trixie
   artifacthub.io/license: MIT
   artifacthub.io/containsSecurityUpdates: "false"
 name: vaultwarden
 apiVersion: v2
-appVersion: 1.35.1
+appVersion: 1.35.2
 dependencies:
   - name: common
     repository: https://charts.bitnami.com/bitnami
@@ -28,4 +28,4 @@ maintainers:
 sources:
   - https://lab.frogg.it/doca/vaultwarden-helm
   - https://github.com/dani-garcia/vaultwarden
-version: 1.2.0
+version: 1.2.1

@@ -231,7 +231,7 @@ $ helm delete --purge my-release
 | ------------------- | ----------------------------------------------------------------------------------------------------------- | -------------------- |
 | `image.registry`    | Vaultwarden image registry                                                                                  | `docker.io`          |
 | `image.repository`  | Vaultwarden image repository                                                                                | `vaultwarden/server` |
-| `image.tag`         | Vaultwarden image tag (immutable tags are recommended)                                                      | `1.35.1-alpine`      |
+| `image.tag`         | Vaultwarden image tag (immutable tags are recommended)                                                      | `1.35.2-alpine`      |
 | `image.digest`      | Vaultwarden image digest in the way sha256:aa.... Please note this parameter, if set, will override the tag | `""`                 |
 | `image.pullPolicy`  | Vaultwarden image pull policy                                                                               | `IfNotPresent`       |
 | `image.pullSecrets` | Specify docker-registry secret names as an array                                                            | `[]`                 |
