@@ -733,11 +733,14 @@ networkPolicy:
       fromIngressController:
         enabled: true
         namespaceSelector: []
-          #kubernetes.io/metadata.name: ingress-nginx
         podSelector: []
-          #app.kubernetes.io/component: controller
-          #app.kubernetes.io/instance: ingress-nginx
-          #app.kubernetes.io/name: ingress-nginx
+        # For Ingress-Nginx
+        # namespaceSelector:
+        #   kubernetes.io/metadata.name: ingress-nginx
+        # podSelector:
+        #   app.kubernetes.io/component: controller
+        #   app.kubernetes.io/instance: ingress-nginx
+        #   app.kubernetes.io/name: ingress-nginx
         # Alternative for Traefik:
         # namespaceSelector:
         #   kubernetes.io/metadata.name: traefik
