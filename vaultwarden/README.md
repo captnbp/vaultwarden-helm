@@ -433,6 +433,7 @@ $ helm delete --purge my-release
 | `networkPolicy.vaultwarden.egress.toSMTP.cidrBlocks`                        | CIDR blocks to SMTP                                                                | `["0.0.0.0/0","::/0"]` |
 | `networkPolicy.vaultwarden.egress.toInternet.enabled`                       | Allow traffic to Internet                                                          | `true`                 |
 | `networkPolicy.vaultwarden.egress.toInternet.cidrBlocks`                    | CIDR blocks to Internet                                                            | `["0.0.0.0/0","::/0"]` |
+| `networkPolicy.vaultwarden.egress.toInternet.ports`                         | Internet ports to allow                                                            | `[]`                   |
 | `networkPolicy.vaultwarden.egress.extraEgress`                              | Add extra ingress rules to the NetworkPolicy (ignored if allowExternalEgress=true) | `[]`                   |
 | `networkPolicy.postgresql.enabled`                                          | Enable NetworkPolicy for PostgreSQL CNPG                                           | `true`                 |
 | `networkPolicy.postgresql.ingress.fromMonitoring.enabled`                   | Allow traffic from monitoring namespace                                            | `true`                 |

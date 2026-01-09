@@ -99,7 +99,7 @@ spec:
             cidr: {{ . }}
         {{- end }}
       ports:
-        {{- include "common.tplvalues.render" ( dict "value" .Values.vaultwarden.networkPolicy.egress.toInternet.ports "context" $ ) | nindent 8 }}
+        {{- include "common.tplvalues.render" ( dict "value" .Values.networkPolicy.vaultwarden.egress.toInternet.ports "context" $ ) | nindent 8 }}
     {{- end }}
     {{- if .Values.networkPolicy.vaultwarden.egress.toSMTP.enabled }}
     # Allow traffic to SMTP servers
@@ -116,6 +116,6 @@ spec:
     {{- end }}
 
     {{- if .Values.networkPolicy.vaultwarden.egress.extraEgress }}
-    {{- include "common.tplvalues.render" ( dict "value" .Values.vaultwarden.networkPolicy.egress.extraEgress "context" $ ) | nindent 4 }}
+    {{- include "common.tplvalues.render" ( dict "value" .Values.networkPolicy.vaultwarden.egress.extraEgress "context" $ ) | nindent 4 }}
     {{- end }}
 {{- end }}
