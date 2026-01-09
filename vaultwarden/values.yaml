@@ -777,27 +777,31 @@ networkPolicy:
       
       ## @param networkPolicy.vaultwarden.egress.toInternet.enabled Allow traffic to Internet
       ## @param networkPolicy.vaultwarden.egress.toInternet.cidrBlocks CIDR blocks to Internet
+      ## @param networkPolicy.vaultwarden.egress.toInternet.ports [array] Internet ports to allow
       ##
       toInternet:
         enabled: true
         cidrBlocks:
           - 0.0.0.0/0
           - ::/0
+        ports:
+          - protocol: TCP
+            port: 443
+          - protocol: UDP
+            port: 443
       ## @param networkPolicy.vaultwarden.egress.extraEgress [array] Add extra ingress rules to the NetworkPolicy (ignored if allowExternalEgress=true)
       ## e.g:
       ## extraEgress:
       ##   - ports:
       ##       - port: 1234
+      ##         protocol: TCP
       ##     to:
       ##       - podSelector:
-      ##           - matchLabels:
-      ##               - role: frontend
-      ##       - podSelector:
-      ##           - matchExpressions:
-      ##               - key: role
-      ##                 operator: In
-      ##                 values:
-      ##                   - frontend
+      ##           matchLabels:
+      ##             role: frontend
+      ##       - namespaceSelector:
+      ##           matchLabels:
+      ##             role: frontend
       ##
       extraEgress: []
 
