@@ -5,4 +5,4 @@ include:
     file: /pipelines/helm.yaml
 
 variables:
-  CHART_PATH: "vaultwarden"
+  CHART_FOLDER: "vaultwarden"
