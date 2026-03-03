@@ -74,7 +74,7 @@ diagnosticMode:
 image:
   registry: docker.io
   repository: vaultwarden/server
-  tag: 1.35.3-alpine
+  tag: 1.35.4-alpine
   digest: ""
   ## Specify a imagePullPolicy
   ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
@@ -905,7 +905,7 @@ tls:
 auxiliaryImage:
   registry: ghcr.io
   repository: cloudnative-pg/postgresql
-  tag: 18.1-system-trixie
+  tag: 18.3-system-trixie
   digest: ""
   pullPolicy: IfNotPresent
   ## Optionally specify an array of imagePullSecrets.
