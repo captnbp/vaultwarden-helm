@@ -2,14 +2,14 @@ annotations:
   category: DeveloperTools
   artifacthub.io/images: |
     - name: vaultwarden
-      image: docker.io/vaultwarden/server:1.35.4-alpine
+      image: docker.io/vaultwarden/server:1.35.5-alpine
     - name: postgresql
       image: ghcr.io/cloudnative-pg/postgresql:18.3-system-trixie
   artifacthub.io/license: MIT
   artifacthub.io/containsSecurityUpdates: "false"
 name: vaultwarden
 apiVersion: v2
-appVersion: 1.35.4
+appVersion: 1.35.5
 dependencies:
   - name: common
     repository: https://charts.bitnami.com/bitnami
