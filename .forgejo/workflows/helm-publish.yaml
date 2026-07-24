@@ -1,0 +1,10 @@
+name: Helm lint, test, publish, sign
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  lint-test-publish-sign:
+    uses: doca/workflows/.forgejo/workflows/helm-publish.yaml@main
+    secrets: inherit
