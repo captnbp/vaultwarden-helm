@@ -235,7 +235,7 @@ $ helm delete --purge my-release
 | `image.digest`      | Vaultwarden image digest in the way sha256:aa.... Please note this parameter, if set, will override the tag | `""`                 |
 | `image.pullPolicy`  | Vaultwarden image pull policy                                                                               | `IfNotPresent`       |
 | `image.pullSecrets` | Specify docker-registry secret names as an array                                                            | `[]`                 |
-| `image.debug`       | Enable %%MAIN_CONTAINER%% image debug mode                                                                  | `false`              |
+| `image.debug`       | Enable Vaultwarden image debug mode                                                                  | `false`              |
 | `rocket.workers`    | Rocket number of workers                                                                                    | `10`                 |
 | `webVaultEnabled`   | Enable Web Vault                                                                                            | `true`               |
 
